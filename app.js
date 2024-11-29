@@ -4,7 +4,7 @@ const cors = require("@koa/cors");
 const dotenv = require("dotenv");
 
 const connectDB = require("./config/db");
-const { ensureAdminAuth , checkJwt} = require("./middlewares/auth");
+const { ensureAdminAuth, checkJwtWithExemption} = require("./middlewares/auth");
 
 // 導入路由
 const productRoutes = require("./routes/product");
@@ -26,7 +26,7 @@ app.use(cors()); // 解決 CORS 問題
 app.use(bodyParser());
 
 app.use(ensureAdminAuth);
-app.use(checkJwt);// 驗證 JWT 的身份
+app.use(checkJwtWithExemption);
 
 // 使用路由
 app.use(productRoutes.routes());

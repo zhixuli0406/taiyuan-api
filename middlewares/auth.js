@@ -1,5 +1,5 @@
 // src/middlewares/auth.js
-
+const exemptRoutes = ["/admin/login"]; 
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
@@ -31,40 +31,30 @@ const ensureSuperAdmin = async (ctx, next) => {
   await next();
 };
 
-const checkJwt = async (ctx, next) => {
-  const token = ctx.headers.authorization?.split(" ")[1];
-  if (!token) {
+const checkJwtWithExemption = async (ctx, next) => {
+  if (exemptRoutes.includes(ctx.path)) {
+    await next(); // 路徑匹配，跳過驗證
+    return;
+  }
+
+  const authHeader = ctx.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     ctx.status = 401;
     ctx.body = { error: "No authorization token provided" };
     return;
   }
 
-  // 設定 Auth0 的 JWKS 客戶端
-  const client = jwksRsa({
-    jwksUri: `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`,
-  });
-
-  // Token 驗證邏輯
-  const getKey = (header, callback) => {
-    client.getSigningKey(header.kid, (err, key) => {
-      if (err) return callback(err);
-      const signingKey = key.publicKey || key.rsaPublicKey;
-      callback(null, signingKey);
-    });
-  };
+  const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, getKey, {
-      audience: process.env.AUTH0_AUDIENCE,
-      issuer: `https://${process.env.AUTH0_DOMAIN}/`,
-    });
-
-    ctx.state.user = decoded; // 把解碼後的用戶信息保存到 ctx.state
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    ctx.state.admin = decoded;
     await next();
-  } catch (err) {
+  } catch (error) {
     ctx.status = 401;
     ctx.body = { error: "Invalid or expired token" };
   }
 };
 
-module.exports = { ensureAdminAuth, ensureSuperAdmin, checkJwt };
+module.exports = { ensureAdminAuth, ensureSuperAdmin, checkJwtWithExemption };
