@@ -4,7 +4,7 @@ const Admin = require("../models/Admin");
 const initializeAdmin = async () => {
   try {
     // 檢查是否已有管理員存在
-    const existingAdmin = await Admin.findOne({ email: "zhixuli0406@gmail.com" });
+    const existingAdmin = await Admin.findOne({ email: process.env.DEFAULT_ADMIN_EMAIL || "admin@example.com"});
     if (existingAdmin) {
       console.log("Default admin already exists.");
       return; // 如果已存在，則跳過創建
