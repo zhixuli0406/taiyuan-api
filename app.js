@@ -17,9 +17,12 @@ const adminRoutes = require("./routes/admin");
 const carouselRoutes = require("./routes/carousels");
 const inventoryRoutes = require("./routes/inventory");
 const orderRoutes = require("./routes/orders");
+const initializeAdmin = require("./config/initAdmin");
 
 dotenv.config();
-connectDB();
+connectDB().then(()=>{
+  initializeAdmin();
+});
 
 const app = new Koa();
 app.use(cors()); // 解決 CORS 問題
