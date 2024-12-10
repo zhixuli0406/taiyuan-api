@@ -18,6 +18,7 @@ const productSchema = new mongoose.Schema(
     isCustomizable: { type: Boolean, default: false }, // 是否支持客製化
     customizableFields: [{ type: String }], // 可配置字段（例如留言）
     stock: { type: Number, default: 0 }, // 總庫存
+    transport: [{ type:String }], // 支援的運送方式
     isFeatured: { type: Boolean, default: false }, // 是否為熱門商品
     isActive: { type: Boolean, default: true }, // 是否啟用
   },
