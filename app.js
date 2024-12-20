@@ -2,17 +2,9 @@ const Koa = require("koa");
 const bodyParser = require("koa-bodyparser");
 const cors = require("@koa/cors");
 const dotenv = require("dotenv");
-const fs = require("fs");
-const path = require("path");
-const https = require("https");
 
 const connectDB = require("./config/db");
 const { ensureAdminAuth} = require("./middlewares/auth");
-
-const options = {
-  key: fs.readFileSync(path.join(__dirname, "ssl", "key.pem")), // 私鑰
-  cert: fs.readFileSync(path.join(__dirname, "ssl", "cert.pem")) // 公鑰
-};
 
 // 導入路由
 const productRoutes = require("./routes/product");
@@ -57,6 +49,6 @@ app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.route());
 
 const port = process.env.PORT || 3000;
-https.createServer(options, app.callback()).listen(PORT, () => {
-  console.log(`HTTPS Server running at https://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
