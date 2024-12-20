@@ -46,7 +46,7 @@ app.use(carouselRoutes.routes());
 app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(storeSettingsRoutes.routes());
-app.use(analyticsRoutes.route());
+app.use(analyticsRoutes.routes());
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {

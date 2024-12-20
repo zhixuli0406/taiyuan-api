@@ -1,5 +1,6 @@
 const Router = require("koa-router");
 const StoreSetting = require("../models/StoreSetting");
+const { upload, uploadImageToS3 } = require("../middlewares/upload");
 
 const router = new Router();
 
@@ -79,7 +80,7 @@ router.put("/store-settings/logo", upload.single("logo"), async (ctx) => {
     }
 
     // 上傳新文件至 S3
-    const newLogoUrl = await uploadFileToS3(file, "logos");
+    const newLogoUrl = await uploadImageToS3(file, "logos");
 
     // 更新商店設定中的 Logo URL
     settings.appearance.logo = newLogoUrl;
