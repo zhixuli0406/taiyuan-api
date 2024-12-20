@@ -17,11 +17,15 @@ const adminRoutes = require("./routes/admin");
 const carouselRoutes = require("./routes/carousels");
 const inventoryRoutes = require("./routes/inventory");
 const orderRoutes = require("./routes/orders");
+const storeSettingsRoutes = require("./routes/storeSettings");
+const analyticsRoutes = require("./routes/analytics");
 const initializeAdmin = require("./config/initAdmin");
+const initializeStoreSettings = require("./config/initStore");
 
 dotenv.config();
 connectDB().then(()=>{
   initializeAdmin();
+  initializeStoreSettings();
 });
 
 const app = new Koa();
@@ -41,6 +45,8 @@ app.use(adminRoutes.routes());
 app.use(carouselRoutes.routes());
 app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
+app.use(storeSettingsRoutes.routes());
+app.use(analyticsRoutes.route());
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
