@@ -13,6 +13,7 @@ const productSchema = new mongoose.Schema(
     description: { type: String }, // 商品描述
     price: { type: Number, required: true }, // 基本價格
     category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" }, // 分類
+    categoryName: { type: String }, //分類名稱
     images: [{ type: String }], // 圖片 URL 列表
     variants: [variantSchema], // 屬性變體
     isCustomizable: { type: Boolean, default: false }, // 是否支持客製化

@@ -2,13 +2,24 @@
 const Router = require("koa-router");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const { uploadImageToS3 } = require("../middlewares/upload");
 
 const router = new Router();
 
 // 創建產品 (POST /products)
 router.post("/products", async (ctx) => {
-  const { name, description, price, category, variants, isCustomizable, customizableFields, stock, isFeatured } =
-    ctx.request.body;
+  const {
+    name,
+    description,
+    price,
+    category,
+    variants,
+    isCustomizable,
+    customizableFields,
+    stock,
+    transport,
+    isFeatured,
+  } = ctx.request.body;
 
   // 驗證分類是否存在
   const existingCategory = await Category.findById(category);
@@ -18,15 +29,29 @@ router.post("/products", async (ctx) => {
     return;
   }
 
+  const categoryName = existingCategory.name;
+
+  const imageUrls = [];
+
+  // 上傳每張圖片到 S3
+  const files = ctx.files || [];
+  for (const file of files) {
+    const imageUrl = await uploadImageToS3(file, "products"); // 存儲在"S3/products"資料夾中
+    imageUrls.push(imageUrl);
+  }
+
   const product = new Product({
     name,
     description,
     price,
     category,
+    categoryName,
+    images: imageUrls,
     variants,
     isCustomizable,
     customizableFields,
     stock,
+    transport,
     isFeatured,
   });
 
@@ -70,8 +95,18 @@ router.get("/products/:id", async (ctx) => {
 // 更新產品 (PUT /products/:id)
 router.put("/products/:id", async (ctx) => {
   const { id } = ctx.params;
-  const { name, description, price, category, variants, isCustomizable, customizableFields, stock, isFeatured } =
-    ctx.request.body;
+  const {
+    name,
+    description,
+    price,
+    category,
+    variants,
+    isCustomizable,
+    customizableFields,
+    stock,
+    transport,
+    isFeatured,
+  } = ctx.request.body;
 
   const product = await Product.findById(id);
   if (!product) {
@@ -80,15 +115,27 @@ router.put("/products/:id", async (ctx) => {
     return;
   }
 
+  const imageUrls = [];
+
+  // 上傳每張圖片到 S3
+  const files = ctx.files || [];
+  for (const file of files) {
+    const imageUrl = await uploadImageToS3(file, "products"); // 存儲在"S3/products"資料夾中
+    imageUrls.push(imageUrl);
+  }
+
   // 更新字段
   product.name = name ?? product.name;
   product.description = description ?? product.description;
   product.price = price ?? product.price;
   product.category = category ?? product.category;
+  product.categoryName = (await Category.findById(category))?.name ?? product.categoryName;
+  product.images = [...product.images,...imageUrls];
   product.variants = variants ?? product.variants;
   product.isCustomizable = isCustomizable ?? product.isCustomizable;
   product.customizableFields = customizableFields ?? product.customizableFields;
   product.stock = stock ?? product.stock;
+  product.transport = transport?? product.transport;
   product.isFeatured = isFeatured ?? product.isFeatured;
 
   await product.save();
