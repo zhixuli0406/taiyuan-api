@@ -2,7 +2,7 @@
 const Router = require("koa-router");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
-const { uploadImageToS3 } = require("../middlewares/upload");
+const { uploadBase64ImageToS3 } = require("../middlewares/upload");
 
 const router = new Router();
 
@@ -35,7 +35,9 @@ router.post("/products", async (ctx) => {
   const uploadedImages = [];
   if (images && images.length > 0) {
     for (const base64 of images) {
+      console.log('Uploading image starting...');
       const imageUrl = await uploadBase64ImageToS3(base64, "products");
+      console.log(imageUrl);
       uploadedImages.push(imageUrl); // 存儲圖片 URL
     }
   }

@@ -24,7 +24,7 @@ const uploadImageToS3 = async (file) => {
   };
 
   const result = await S3.upload(params).promise();
-  return result.Location; // 返回文件的公開 URL
+  return process.env.CLOUD_FRONT_URL + `image-gallery/${Date.now()}_${file.originalname}`; // 返回文件的公開 URL
 };
 
 const uploadBase64ImageToS3 = async (base64Data, folder) => {
@@ -36,13 +36,13 @@ const uploadBase64ImageToS3 = async (base64Data, folder) => {
     Key: fileName,
     Body: buffer,
     ContentType: "image/jpeg",
-    ACL: "public-read", // 確保圖片是公開訪問的
   };
 
   try {
     const result = await S3.upload(params).promise();
-    return result.Location; // 返回圖片的 S3 URL
+    return process.env.CLOUD_FRONT_URL + fileName; // 返回圖片的 S3 URL
   } catch (error) {
+    console.error("Error uploading image to S3:", error);
     throw new Error(`Error uploading image to S3: ${error.message}`);
   }
 };

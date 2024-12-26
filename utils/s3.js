@@ -12,12 +12,11 @@ const uploadFileToS3 = async (file, folder) => {
     Key: fileName,
     Body: file.buffer,
     ContentType: file.mimetype,
-    ACL: "public-read", // 公開讀取權限，允許公開訪問圖片
   };
 
   try {
     const result = await S3.upload(params).promise();
-    return result.Location; // 返回文件的公開 URL
+    return process.env.CLOUD_FRONT_URL + fileName; // 返回文件的公開 URL
   } catch (err) {
     throw new Error(`Error uploading file to S3: ${err.message}`);
   }
