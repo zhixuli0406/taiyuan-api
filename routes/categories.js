@@ -6,16 +6,6 @@ const Category = require('../models/Category');
 
 const router = new Router();
 
-// 設置管理員身份驗證的中介層
-const ensureAdminAuth = async (ctx, next) => {
-  if (!ctx.state.user || !ctx.state.user.isAdmin) {
-    ctx.status = 403;
-    ctx.body = { error: 'Forbidden' };
-    return;
-  }
-  await next();
-};
-
 // 獲取分類列表 (GET /categories)
 router.get('/categories', async (ctx) => {
   const categories = await Category.find().populate('parentCategory').exec();
@@ -43,7 +33,7 @@ router.get('/categories/:id', async (ctx) => {
 });
 
 // 新增分類 (POST /categories)
-router.post('/categories', ensureAdminAuth, async (ctx) => {
+router.post('/categories', async (ctx) => {
   const { name, description, parentCategory, isActive } = ctx.request.body;
 
   // 如果設置了父分類，檢查它是否存在
@@ -72,7 +62,7 @@ router.post('/categories', ensureAdminAuth, async (ctx) => {
 });
 
 // 更新分類 (PUT /categories/:id)
-router.put('/categories/:id', ensureAdminAuth, async (ctx) => {
+router.put('/categories/:id', async (ctx) => {
   const { id } = ctx.params;
   const { name, description, parentCategory, isActive } = ctx.request.body;
 
@@ -115,7 +105,7 @@ router.put('/categories/:id', ensureAdminAuth, async (ctx) => {
 });
 
 // 刪除分類 (DELETE /categories/:id)
-router.delete('/categories/:id', ensureAdminAuth, async (ctx) => {
+router.delete('/categories/:id', async (ctx) => {
   const { id } = ctx.params;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
