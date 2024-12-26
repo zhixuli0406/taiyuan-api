@@ -24,7 +24,7 @@ const ensureAdminAuth = async (ctx, next) => {
     await next();
   } catch (error) {
     ctx.status = 401;
-    ctx.body = { error: "Invalid or expired token" };
+    ctx.body = { error: "Invalid or expired token" ,fullError: error};
   }
 };
 
