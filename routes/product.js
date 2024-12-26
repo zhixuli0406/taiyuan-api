@@ -13,6 +13,7 @@ router.post("/products", async (ctx) => {
     description,
     price,
     category,
+    images,
     variants,
     isCustomizable,
     customizableFields,
@@ -31,13 +32,12 @@ router.post("/products", async (ctx) => {
 
   const categoryName = existingCategory.name;
 
-  const imageUrls = [];
-
-  // 上傳每張圖片到 S3
-  const files = ctx.files || [];
-  for (const file of files) {
-    const imageUrl = await uploadImageToS3(file, "products"); // 存儲在"S3/products"資料夾中
-    imageUrls.push(imageUrl);
+  const uploadedImages = [];
+  if (images && images.length > 0) {
+    for (const base64 of images) {
+      const imageUrl = await uploadBase64ImageToS3(base64, "products");
+      uploadedImages.push(imageUrl); // 存儲圖片 URL
+    }
   }
 
   const product = new Product({
@@ -46,7 +46,7 @@ router.post("/products", async (ctx) => {
     price,
     category,
     categoryName,
-    images: imageUrls,
+    images: uploadedImages,
     variants,
     isCustomizable,
     customizableFields,
@@ -115,13 +115,12 @@ router.put("/products/:id", async (ctx) => {
     return;
   }
 
-  const imageUrls = [];
-
-  // 上傳每張圖片到 S3
-  const files = ctx.files || [];
-  for (const file of files) {
-    const imageUrl = await uploadImageToS3(file, "products"); // 存儲在"S3/products"資料夾中
-    imageUrls.push(imageUrl);
+  const uploadedImages = [];
+  if (images && images.length > 0) {
+    for (const base64 of images) {
+      const imageUrl = await uploadBase64ImageToS3(base64, "products");
+      uploadedImages.push(imageUrl); // 存儲圖片 URL
+    }
   }
 
   // 更新字段
@@ -129,13 +128,14 @@ router.put("/products/:id", async (ctx) => {
   product.description = description ?? product.description;
   product.price = price ?? product.price;
   product.category = category ?? product.category;
-  product.categoryName = (await Category.findById(category))?.name ?? product.categoryName;
-  product.images = [...product.images,...imageUrls];
+  product.categoryName =
+    (await Category.findById(category))?.name ?? product.categoryName;
+  product.images = [...product.images, ...uploadedImages];
   product.variants = variants ?? product.variants;
   product.isCustomizable = isCustomizable ?? product.isCustomizable;
   product.customizableFields = customizableFields ?? product.customizableFields;
   product.stock = stock ?? product.stock;
-  product.transport = transport?? product.transport;
+  product.transport = transport ?? product.transport;
   product.isFeatured = isFeatured ?? product.isFeatured;
 
   await product.save();

@@ -27,4 +27,24 @@ const uploadImageToS3 = async (file) => {
   return result.Location; // 返回文件的公開 URL
 };
 
-module.exports = { upload, uploadImageToS3 };
+const uploadBase64ImageToS3 = async (base64Data, folder) => {
+  const buffer = Buffer.from(base64Data, "base64");
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 8)}.jpg`;
+
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME, // S3 存儲桶名稱
+    Key: fileName,
+    Body: buffer,
+    ContentType: "image/jpeg",
+    ACL: "public-read", // 確保圖片是公開訪問的
+  };
+
+  try {
+    const result = await S3.upload(params).promise();
+    return result.Location; // 返回圖片的 S3 URL
+  } catch (error) {
+    throw new Error(`Error uploading image to S3: ${error.message}`);
+  }
+};
+
+module.exports = { upload, uploadImageToS3, uploadBase64ImageToS3 };
