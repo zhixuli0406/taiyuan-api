@@ -2,8 +2,6 @@
 const exemptRoutes = ["/admin/login"]; 
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
-
 const ensureAdminAuth = async (ctx, next) => {
   const token = ctx.headers.authorization?.split(" ")[1];
 
@@ -19,7 +17,7 @@ const ensureAdminAuth = async (ctx, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     ctx.state.admin = decoded; // 儲存到 ctx.state
     await next();
   } catch (error) {

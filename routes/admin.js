@@ -6,8 +6,6 @@ const jwt = require("jsonwebtoken");
 
 const router = new Router();
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
-
 // 管理員登入 (POST /admin/login)
 router.post("/admin/login", async (ctx) => {
   const { email, password } = ctx.request.body;
@@ -26,12 +24,11 @@ router.post("/admin/login", async (ctx) => {
     ctx.body = { error: "Invalid email or password" };
     return;
   }
-
   // 簽發 JWT
   const token = jwt.sign(
     { id: admin._id, role: admin.role },
-    JWT_SECRET,
-    { expiresIn: "1d" } // Token 有效期為 1 天
+    process.env.JWT_SECRET,
+    {algorithm: "HS256", expiresIn: "1d" } // Token 有效期為 1 天
   );
 
   ctx.body = { message: "Login successful", token };
