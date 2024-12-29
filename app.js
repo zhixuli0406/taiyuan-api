@@ -32,9 +32,9 @@ const app = new Koa();
 app.use(cors()); // 解決 CORS 問題
 app.use(bodyParser({
   enableTypes: ['json', 'form', 'text'], // 支援的請求類型
-  jsonLimit: '10mb', // JSON 格式的限制
-  formLimit: '10mb', // 表單數據大小限制
-  textLimit: '10mb', // 純文本數據大小限制
+  jsonLimit: '100mb', // JSON 格式的限制
+  formLimit: '100mb', // 表單數據大小限制
+  textLimit: '100mb', // 純文本數據大小限制
 }));
 
 app.use(ensureAdminAuth);
