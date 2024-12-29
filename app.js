@@ -30,6 +30,8 @@ connectDB().then(()=>{
 
 const app = new Koa();
 app.use(cors()); // 解決 CORS 問題
+app.use(express.json({ limit: '10mb' })); // JSON 請求大小限制
+app.use(express.urlencoded({ limit: '10mb', extended: true })); // 表單資料大小限制
 app.use(bodyParser());
 
 app.use(ensureAdminAuth);
