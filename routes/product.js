@@ -102,6 +102,7 @@ router.put("/products/:id", async (ctx) => {
     description,
     price,
     category,
+    images,
     variants,
     isCustomizable,
     customizableFields,
@@ -117,14 +118,6 @@ router.put("/products/:id", async (ctx) => {
     return;
   }
 
-  const uploadedImages = [];
-  if (images && images.length > 0) {
-    for (const base64 of images) {
-      const imageUrl = await uploadBase64ImageToS3(base64, "products");
-      uploadedImages.push(imageUrl); // 存儲圖片 URL
-    }
-  }
-
   // 更新字段
   product.name = name ?? product.name;
   product.description = description ?? product.description;
@@ -132,7 +125,7 @@ router.put("/products/:id", async (ctx) => {
   product.category = category ?? product.category;
   product.categoryName =
     (await Category.findById(category))?.name ?? product.categoryName;
-  product.images = [...product.images, ...uploadedImages];
+  product.images = images ?? product.images;
   product.variants = variants ?? product.variants;
   product.isCustomizable = isCustomizable ?? product.isCustomizable;
   product.customizableFields = customizableFields ?? product.customizableFields;

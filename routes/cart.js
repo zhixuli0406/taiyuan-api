@@ -7,18 +7,8 @@ const Product = require('../models/Product');
 
 const router = new Router();
 
-// Middleware: 確保用戶已登入
-const ensureAuth = async (ctx, next) => {
-  if (!ctx.state.user) {
-    ctx.status = 401;
-    ctx.body = { error: 'Unauthorized' };
-    return;
-  }
-  await next();
-};
-
 // 獲取當前用戶的購物車 (GET /cart)
-router.get('/cart', ensureAuth, async (ctx) => {
+router.get('/cart', async (ctx) => {
   const userId = ctx.state.user._id;
   const cart = await Cart.findOne({ user: userId }).populate('items.product');
   if (!cart) {
@@ -29,7 +19,7 @@ router.get('/cart', ensureAuth, async (ctx) => {
 });
 
 // 添加產品到購物車 (POST /cart)
-router.post('/cart', ensureAuth, async (ctx) => {
+router.post('/cart', async (ctx) => {
   const userId = ctx.state.user._id;
   const { productId, quantity, customFields } = ctx.request.body; // 從請求中獲取數據
 
@@ -69,7 +59,7 @@ router.post('/cart', ensureAuth, async (ctx) => {
 });
 
 // 更新購物車中的產品數量 (PUT /cart)
-router.put('/cart', ensureAuth, async (ctx) => {
+router.put('/cart', async (ctx) => {
   const userId = ctx.state.user._id;
   const { productId, quantity } = ctx.request.body;
 
@@ -99,7 +89,7 @@ router.put('/cart', ensureAuth, async (ctx) => {
 });
 
 // 移除購物車中的產品 (DELETE /cart/:productId)
-router.delete('/cart/:productId', ensureAuth, async (ctx) => {
+router.delete('/cart/:productId', async (ctx) => {
   const userId = ctx.state.user._id;
   const { productId } = ctx.params;
 
@@ -123,7 +113,7 @@ router.delete('/cart/:productId', ensureAuth, async (ctx) => {
 });
 
 // 清空購物車 (DELETE /cart)
-router.delete('/cart', ensureAuth, async (ctx) => {
+router.delete('/cart', async (ctx) => {
   const userId = ctx.state.user._id;
   const cart = await Cart.findOne({ user: userId });
 

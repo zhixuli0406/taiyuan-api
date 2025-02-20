@@ -6,7 +6,7 @@ const ensureAdminAuth = async (ctx, next) => {
   const token = ctx.headers.authorization?.split(" ")[1];
 
   if (exemptRoutes.includes(ctx.path)) {
-    await next(); // 路徑匹配，跳過驗證
+    await next();
     return;
   }
   
