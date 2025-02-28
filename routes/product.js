@@ -103,6 +103,7 @@ router.put("/products/:id", async (ctx) => {
     price,
     category,
     images,
+    newImages,
     variants,
     isCustomizable,
     customizableFields,
@@ -118,6 +119,16 @@ router.put("/products/:id", async (ctx) => {
     return;
   }
 
+  const uploadedImages = images;
+  if (newImages && newImages.length > 0) {
+    for (const base64 of newImages) {
+      console.log('Uploading image starting...');
+      const imageUrl = await uploadBase64ImageToS3(base64, "products");
+      console.log(imageUrl);
+      uploadedImages.push(imageUrl); // 存儲圖片 URL
+    }
+  }
+
   // 更新字段
   product.name = name ?? product.name;
   product.description = description ?? product.description;
@@ -125,7 +136,7 @@ router.put("/products/:id", async (ctx) => {
   product.category = category ?? product.category;
   product.categoryName =
     (await Category.findById(category))?.name ?? product.categoryName;
-  product.images = images ?? product.images;
+  product.images = uploadedImages ?? product.images;
   product.variants = variants ?? product.variants;
   product.isCustomizable = isCustomizable ?? product.isCustomizable;
   product.customizableFields = customizableFields ?? product.customizableFields;

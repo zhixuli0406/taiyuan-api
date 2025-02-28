@@ -47,4 +47,43 @@ const uploadBase64ImageToS3 = async (base64Data, folder) => {
   }
 };
 
-module.exports = { upload, uploadImageToS3, uploadBase64ImageToS3 };
+const listImagesFromS3 = async () => {
+  try {
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME
+    };
+    
+    const data = await S3.listObjectsV2(params).promise();
+    
+    // 篩選出圖片類型（如 .jpg, .png, .gif）
+    const images = data.Contents.filter(item => 
+      item.Key.match(/\.(jpg|jpeg|png|gif)$/i)
+    );
+
+    return images.map(img => ({
+      url: process.env.CLOUD_FRONT_URL + img.Key,
+      key: img.Key
+    }));
+    
+  } catch (err) {
+    console.error('列出圖片時發生錯誤:', err);
+  }
+}
+
+const deleteImageFromS3 = async (key) => {
+  try {
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: key
+    };
+    
+    await S3.deleteObject(params).promise();
+    return true;
+    
+  } catch (err) {
+    console.error('刪除圖片時發生錯誤:', err);
+    return false;
+  }
+}
+
+module.exports = { upload, uploadImageToS3, uploadBase64ImageToS3, listImagesFromS3, deleteImageFromS3 };

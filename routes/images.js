@@ -20,11 +20,7 @@ router.post("/images", upload.single("image"), async (ctx) => {
   // 保存圖片信息到數據庫
   const newImage = new Image({
     title,
-    description,
     url: imageUrl,
-    fileName: ctx.file.originalname,
-    width: 800,
-    height: 800,
   });
 
   await newImage.save();
