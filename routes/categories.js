@@ -8,7 +8,7 @@ const router = new Router();
 
 // 獲取分類列表 (GET /categories)
 router.get('/categories', async (ctx) => {
-  const categories = await Category.find().populate('parentCategory').exec();
+  const categories = await Category.find().populate('parentCategory').sort({ order: 1 }).exec();
   ctx.body = { categories };
 });
 
@@ -34,7 +34,7 @@ router.get('/categories/:id', async (ctx) => {
 
 // 新增分類 (POST /categories)
 router.post('/categories', async (ctx) => {
-  const { name, description, parentCategory, isActive } = ctx.request.body;
+  const { name, description, parentCategory, isActive, order } = ctx.request.body;
 
   // 如果設置了父分類，檢查它是否存在
   if (parentCategory && !mongoose.Types.ObjectId.isValid(parentCategory)) {
@@ -55,6 +55,7 @@ router.post('/categories', async (ctx) => {
     description,
     parentCategory,
     isActive,
+    order,
   });
 
   await newCategory.save();
@@ -64,7 +65,7 @@ router.post('/categories', async (ctx) => {
 // 更新分類 (PUT /categories/:id)
 router.put('/categories/:id', async (ctx) => {
   const { id } = ctx.params;
-  const { name, description, parentCategory, isActive } = ctx.request.body;
+  const { name, description, parentCategory, isActive, order } = ctx.request.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     ctx.status = 400;
@@ -97,8 +98,9 @@ router.put('/categories/:id', async (ctx) => {
   // 更新分類
   category.name = name ?? category.name;
   category.description = description ?? category.description;
-  category.parentCategory = parentCategory ;
+  category.parentCategory = parentCategory;
   category.isActive = typeof isActive === 'boolean' ? isActive : category.isActive;
+  category.order = order ?? category.order;
 
   await category.save();
   ctx.body = { message: 'Category updated', category };

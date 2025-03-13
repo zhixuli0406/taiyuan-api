@@ -7,6 +7,7 @@ const categorySchema = new mongoose.Schema({
   description: { type: String },
   parentCategory: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null }, // 指向父分類
   isActive: { type: Boolean, default: true }, // 用於啟用/禁用分類
+  order: { type: Number, default: 0 }, // 添加 order 字段以支持排序
 }, { timestamps: true });
 
 // 虛擬字段用於取得子分類
