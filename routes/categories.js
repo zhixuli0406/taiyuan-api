@@ -97,7 +97,7 @@ router.put('/categories/:id', async (ctx) => {
   // 更新分類
   category.name = name ?? category.name;
   category.description = description ?? category.description;
-  category.parentCategory = parentCategory ?? category.parentCategory;
+  category.parentCategory = parentCategory ;
   category.isActive = typeof isActive === 'boolean' ? isActive : category.isActive;
 
   await category.save();
