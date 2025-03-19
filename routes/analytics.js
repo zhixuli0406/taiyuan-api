@@ -1,3 +1,136 @@
+/**
+ * @openapi
+ * tags:
+ *   name: Analytics
+ *   description: 分析數據的 API
+ */
+
+/**
+ * @openapi
+ * /analytics/overview:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: 獲取概覽統計數據
+ *     responses:
+ *       200:
+ *         description: 成功獲取概覽數據
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 totalRevenue:
+ *                   type: number
+ *                 totalOrders:
+ *                   type: number
+ *                 totalProductsSold:
+ *                   type: number
+ *       500:
+ *         description: 伺服器錯誤
+ */
+
+/**
+ * @openapi
+ * /analytics/sales:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: 獲取銷售數據
+ *     parameters:
+ *       - name: start
+ *         in: query
+ *         required: false
+ *         description: 開始日期 (YYYY-MM-DD)
+ *         schema:
+ *           type: string
+ *       - name: end
+ *         in: query
+ *         required: false
+ *         description: 結束日期 (YYYY-MM-DD)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取銷售數據
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   dailyRevenue:
+ *                     type: number
+ *                   dailyOrders:
+ *                     type: number
+ *       500:
+ *         description: 伺服器錯誤
+ */
+
+/**
+ * @openapi
+ * /analytics/status:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: 獲取訂單狀態統計
+ *     responses:
+ *       200:
+ *         description: 成功獲取訂單狀態統計
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   count:
+ *                     type: number
+ *       500:
+ *         description: 伺服器錯誤
+ */
+
+/**
+ * @openapi
+ * /analytics/top-products:
+ *   get:
+ *     tags: [Analytics]
+ *     summary: 獲取銷售量最高的產品
+ *     parameters:
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: 返回的產品數量限制
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 成功獲取銷售量最高的產品
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   totalQuantity:
+ *                     type: number
+ *                   totalRevenue:
+ *                     type: number
+ *                   productDetails:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                       properties:
+ *                         // 这里可以添加产品详细信息的属性
+ *       500:
+ *         description: 伺服器錯誤
+ */
+
 const Router = require("koa-router");
 const Order = require("../models/Order");
 

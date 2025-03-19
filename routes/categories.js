@@ -1,5 +1,168 @@
 // src/routes/categories.js
 
+/**
+ * @openapi
+ * tags:
+ *   name: Categories
+ *   description: 管理分類的 API
+ */
+
+/**
+ * @openapi
+ * /categories:
+ *   get:
+ *     tags: [Categories]
+ *     summary: 獲取分類列表
+ *     responses:
+ *       200:
+ *         description: 成功獲取分類列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Category'
+ *   post:
+ *     tags: [Categories]
+ *     summary: 新增分類
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               parentCategory:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               order:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: 成功創建分類
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 category:
+ *                   $ref: '#/components/schemas/Category'
+ */
+
+/**
+ * @openapi
+ * /categories/{id}:
+ *   get:
+ *     tags: [Categories]
+ *     summary: 根據 ID 獲取單一分類
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 分類的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取分類
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 category:
+ *                   $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: 分類未找到
+ *   put:
+ *     tags: [Categories]
+ *     summary: 更新分類
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 分類的 ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               parentCategory:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *               order:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: 成功更新分類
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 category:
+ *                   $ref: '#/components/schemas/Category'
+ *       404:
+ *         description: 分類未找到
+ *   delete:
+ *     tags: [Categories]
+ *     summary: 刪除分類
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 分類的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: 成功刪除分類
+ *       404:
+ *         description: 分類未找到
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Category:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         parentCategory:
+ *           type: string
+ *         isActive:
+ *           type: boolean
+ *         order:
+ *           type: number
+ */
+
 const Router = require('koa-router');
 const mongoose = require('mongoose');
 const Category = require('../models/Category');
@@ -25,7 +188,7 @@ router.get('/categories/:id', async (ctx) => {
   const category = await Category.findById(id).populate('subCategories').exec();
   if (!category) {
     ctx.status = 404;
-    ctx.body = { error: 'Category not found' };
+    ctx.body = { error: '分類未找到' };
     return;
   }
 
@@ -39,14 +202,14 @@ router.post('/categories', async (ctx) => {
   // 如果設置了父分類，檢查它是否存在
   if (parentCategory && !mongoose.Types.ObjectId.isValid(parentCategory)) {
     ctx.status = 400;
-    ctx.body = { error: 'Invalid parent category ID' };
+    ctx.body = { error: '無效的父分類 ID' };
     return;
   }
 
   const parent = parentCategory ? await Category.findById(parentCategory) : null;
   if (parentCategory && !parent) {
     ctx.status = 404;
-    ctx.body = { error: 'Parent category not found' };
+    ctx.body = { error: '父分類未找到' };
     return;
   }
 
@@ -76,7 +239,7 @@ router.put('/categories/:id', async (ctx) => {
   const category = await Category.findById(id);
   if (!category) {
     ctx.status = 404;
-    ctx.body = { error: 'Category not found' };
+    ctx.body = { error: '分類未找到' };
     return;
   }
 
@@ -84,13 +247,13 @@ router.put('/categories/:id', async (ctx) => {
   if (parentCategory) {
     if (!mongoose.Types.ObjectId.isValid(parentCategory)) {
       ctx.status = 400;
-      ctx.body = { error: 'Invalid parent category ID' };
+      ctx.body = { error: '無效的父分類 ID' };
       return;
     }
     const parent = await Category.findById(parentCategory);
     if (!parent) {
       ctx.status = 404;
-      ctx.body = { error: 'Parent category not found' };
+      ctx.body = { error: '父分類未找到' };
       return;
     }
   }
@@ -119,7 +282,7 @@ router.delete('/categories/:id', async (ctx) => {
   const category = await Category.findById(id);
   if (!category) {
     ctx.status = 404;
-    ctx.body = { error: 'Category not found' };
+    ctx.body = { error: '分類未找到' };
     return;
   }
 
@@ -127,7 +290,7 @@ router.delete('/categories/:id', async (ctx) => {
   const hasSubCategories = await Category.exists({ parentCategory: id });
   if (hasSubCategories) {
     ctx.status = 400;
-    ctx.body = { error: 'Cannot delete category with subcategories' };
+    ctx.body = { error: '無法刪除有子分類的分類' };
     return;
   }
 

@@ -1,3 +1,41 @@
+/**
+ * @openapi
+ * tags:
+ *   name: Auth
+ *   description: 用户认证的 API
+ */
+
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: 通过 Auth0 登录获取用户信息
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               accessToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 登录成功，返回 JWT
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       401:
+ *         description: 无效的登录凭证
+ *       404:
+ *         description: 用户未找到
+ */
+
 const Router = require('koa-router');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
@@ -26,7 +64,7 @@ router.post('/login', async ctx => {
     ctx.body = { token };
   } catch (err) {
     ctx.status = 401;
-    ctx.body = { message: 'Invalid login' };
+    ctx.body = { error: "無效的電子郵件或密碼" };
   }
 });
 

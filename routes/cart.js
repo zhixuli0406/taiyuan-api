@@ -1,5 +1,194 @@
 // src/routes/cart.js
 
+/**
+ * @openapi
+ * tags:
+ *   name: Cart
+ *   description: 购物车管理的 API
+ */
+
+/**
+ * @openapi
+ * /cart:
+ *   get:
+ *     tags: [Cart]
+ *     summary: 获取当前用户的购物车
+ *     responses:
+ *       200:
+ *         description: 成功获取购物车
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 cart:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           product:
+ *                             type: string
+ *                           quantity:
+ *                             type: number
+ *                           customFields:
+ *                             type: object
+ *       404:
+ *         description: 购物车未找到
+ */
+
+/**
+ * @openapi
+ * /cart:
+ *   post:
+ *     tags: [Cart]
+ *     summary: 添加产品到购物车
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *               customFields:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: 产品成功添加到购物车
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 cart:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           product:
+ *                             type: string
+ *                           quantity:
+ *                             type: number
+ *                           customFields:
+ *                             type: object
+ *       400:
+ *         description: 请求参数错误
+ *       404:
+ *         description: 产品未找到
+ */
+
+/**
+ * @openapi
+ * /cart:
+ *   put:
+ *     tags: [Cart]
+ *     summary: 更新购物车中的产品数量
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               productId:
+ *                 type: string
+ *               quantity:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: 产品数量更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 cart:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           product:
+ *                             type: string
+ *                           quantity:
+ *                             type: number
+ *                           customFields:
+ *                             type: object
+ *       400:
+ *         description: 请求参数错误
+ *       404:
+ *         description: 购物车未找到或产品不在购物车中
+ */
+
+/**
+ * @openapi
+ * /cart/{productId}:
+ *   delete:
+ *     tags: [Cart]
+ *     summary: 移除购物车中的产品
+ *     parameters:
+ *       - name: productId
+ *         in: path
+ *         required: true
+ *         description: 产品的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: 产品成功移除
+ *       400:
+ *         description: 请求参数错误
+ *       404:
+ *         description: 购物车未找到或产品不在购物车中
+ */
+
+/**
+ * @openapi
+ * /cart:
+ *   delete:
+ *     tags: [Cart]
+ *     summary: 清空购物车
+ *     responses:
+ *       200:
+ *         description: 购物车已清空
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 cart:
+ *                   type: object
+ *                   properties:
+ *                     items:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           product:
+ *                             type: string
+ *                           quantity:
+ *                             type: number
+ *                           customFields:
+ *                             type: object
+ */
+
 const Router = require('koa-router');
 const mongoose = require('mongoose');
 const Cart = require('../models/Cart');
@@ -25,7 +214,7 @@ router.post('/cart', async (ctx) => {
 
   if (!mongoose.Types.ObjectId.isValid(productId)) {
     ctx.status = 400;
-    ctx.body = { error: 'Invalid product ID' };
+    ctx.body = { error: "無效的產品 ID" };
     return;
   }
 
@@ -72,7 +261,7 @@ router.put('/cart', async (ctx) => {
   const cart = await Cart.findOne({ user: userId });
   if (!cart) {
     ctx.status = 404;
-    ctx.body = { error: 'Cart not found' };
+    ctx.body = { error: '購物車未找到' };
     return;
   }
 
@@ -84,7 +273,7 @@ router.put('/cart', async (ctx) => {
     ctx.body = { message: 'Product quantity updated', cart };
   } else {
     ctx.status = 404;
-    ctx.body = { error: 'Product not in cart' };
+    ctx.body = { error: '產品不在購物車中' };
   }
 });
 
@@ -102,7 +291,7 @@ router.delete('/cart/:productId', async (ctx) => {
   const cart = await Cart.findOne({ user: userId });
   if (!cart) {
     ctx.status = 404;
-    ctx.body = { error: 'Cart not found' };
+    ctx.body = { error: '購物車未找到' };
     return;
   }
 

@@ -1,4 +1,104 @@
 // src/routes/customers.js
+
+/**
+ * @openapi
+ * tags:
+ *   name: Customers
+ *   description: 客户管理的 API
+ */
+
+/**
+ * @openapi
+ * /customers:
+ *   get:
+ *     tags: [Customers]
+ *     summary: 获取客户列表
+ *     responses:
+ *       200:
+ *         description: 成功获取客户列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 customers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       email:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *       403:
+ *         description: 权限不足
+ */
+
+/**
+ * @openapi
+ * /customers:
+ *   post:
+ *     tags: [Customers]
+ *     summary: 创建新客户
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: 客户创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 customer:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *       400:
+ *         description: 请求参数错误
+ *       403:
+ *         description: 权限不足
+ */
+
+/**
+ * @openapi
+ * /customers/me:
+ *   get:
+ *     tags: [Customers]
+ *     summary: 获取当前登录客户信息
+ *     responses:
+ *       200:
+ *         description: 成功获取客户信息
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *       403:
+ *         description: 权限不足
+ */
+
 const Router = require("koa-router");
 const axios = require("axios");
 

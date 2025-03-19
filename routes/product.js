@@ -1,4 +1,403 @@
 // src/routes/products.js
+
+/**
+ * @openapi
+ * tags:
+ *   name: Products
+ *   description: 产品管理的 API
+ */
+
+/**
+ * @openapi
+ * /products:
+ *   post:
+ *     tags: [Products]
+ *     summary: 创建产品
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               variants:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     quantity:
+ *                       type: number
+ *               isCustomizable:
+ *                 type: boolean
+ *               customizableFields:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               stock:
+ *                 type: number
+ *               transport:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isFeatured:
+ *                 type: boolean
+ *     responses:
+ *       201:
+ *         description: 产品创建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     category:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     variants:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           price:
+ *                             type: number
+ *                           quantity:
+ *                             type: number
+ *                     isCustomizable:
+ *                       type: boolean
+ *                     customizableFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     stock:
+ *                       type: number
+ *                     transport:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     isFeatured:
+ *                       type: boolean
+ *       404:
+ *         description: 分类未找到
+ */
+
+/**
+ * @openapi
+ * /products:
+ *   get:
+ *     tags: [Products]
+ *     summary: 获取产品列表
+ *     parameters:
+ *       - name: page
+ *         in: query
+ *         required: false
+ *         description: 页码
+ *         schema:
+ *           type: integer
+ *       - name: limit
+ *         in: query
+ *         required: false
+ *         description: 每页产品数量
+ *         schema:
+ *           type: integer
+ *       - name: category
+ *         in: query
+ *         required: false
+ *         description: 分类 ID
+ *         schema:
+ *           type: string
+ *       - name: search
+ *         in: query
+ *         required: false
+ *         description: 产品名称搜索
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功获取产品列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 products:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       price:
+ *                         type: number
+ *                       category:
+ *                         type: string
+ *                       images:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       variants:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             name:
+ *                               type: string
+ *                             price:
+ *                               type: number
+ *                             quantity:
+ *                               type: number
+ *                       isCustomizable:
+ *                         type: boolean
+ *                       customizableFields:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       stock:
+ *                         type: number
+ *                       transport:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       isFeatured:
+ *                         type: boolean
+ *                 total:
+ *                   type: integer
+ *       404:
+ *         description: 未找到产品
+ */
+
+/**
+ * @openapi
+ * /products/{id}:
+ *   get:
+ *     tags: [Products]
+ *     summary: 获取单一产品
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 产品的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功获取产品
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     category:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     variants:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           price:
+ *                             type: number
+ *                           quantity:
+ *                             type: number
+ *                     isCustomizable:
+ *                       type: boolean
+ *                     customizableFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     stock:
+ *                       type: number
+ *                     transport:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     isFeatured:
+ *                       type: boolean
+ *       404:
+ *         description: 产品未找到
+ */
+
+/**
+ * @openapi
+ * /products/{id}:
+ *   put:
+ *     tags: [Products]
+ *     summary: 更新产品
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 产品的 ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               images:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               newImages:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               variants:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     quantity:
+ *                       type: number
+ *               isCustomizable:
+ *                 type: boolean
+ *               customizableFields:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               stock:
+ *                 type: number
+ *               transport:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               isFeatured:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: 产品更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 product:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     description:
+ *                       type: string
+ *                     price:
+ *                       type: number
+ *                     category:
+ *                       type: string
+ *                     images:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     variants:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           price:
+ *                             type: number
+ *                           quantity:
+ *                             type: number
+ *                     isCustomizable:
+ *                       type: boolean
+ *                     customizableFields:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     stock:
+ *                       type: number
+ *                     transport:
+ *                       type: array
+ *                       items:
+ *                         type: string
+ *                     isFeatured:
+ *                       type: boolean
+ *       404:
+ *         description: 产品未找到
+ */
+
+/**
+ * @openapi
+ * /products/{id}:
+ *   delete:
+ *     tags: [Products]
+ *     summary: 删除产品
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 产品的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: 产品删除成功
+ *       404:
+ *         description: 产品未找到
+ */
+
 const Router = require("koa-router");
 const Product = require("../models/Product");
 const Category = require("../models/Category");

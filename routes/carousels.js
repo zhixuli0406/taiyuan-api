@@ -1,4 +1,161 @@
 // src/routes/carousel.js
+
+/**
+ * @openapi
+ * tags:
+ *   name: Carousels
+ *   description: 輪播圖管理的 API
+ */
+
+/**
+ * @openapi
+ * /carousel:
+ *   post:
+ *     tags: [Carousels]
+ *     summary: 創建新的輪播圖
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               link:
+ *                 type: string
+ *               order:
+ *                 type: number
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: 輪播圖創建成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 carousel:
+ *                   $ref: '#/components/schemas/Carousel'
+ *       400:
+ *         description: 請求參數錯誤
+ */
+
+/**
+ * @openapi
+ * /carousel:
+ *   get:
+ *     tags: [Carousels]
+ *     summary: 獲取所有輪播圖列表
+ *     responses:
+ *       200:
+ *         description: 成功獲取輪播圖列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 carousels:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Carousel'
+ */
+
+/**
+ * @openapi
+ * /carousel/{id}:
+ *   put:
+ *     tags: [Carousels]
+ *     summary: 更新輪播圖
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 輪播圖的 ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               link:
+ *                 type: string
+ *               order:
+ *                 type: number
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: 輪播圖更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 carousel:
+ *                   $ref: '#/components/schemas/Carousel'
+ *       404:
+ *         description: 輪播圖未找到
+ */
+
+/**
+ * @openapi
+ * /carousel/{id}:
+ *   delete:
+ *     tags: [Carousels]
+ *     summary: 刪除輪播圖
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 輪播圖的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: 輪播圖刪除成功
+ *       404:
+ *         description: 輪播圖未找到
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Carousel:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         imageUrl:
+ *           type: string
+ *         link:
+ *           type: string
+ *         order:
+ *           type: number
+ *         isActive:
+ *           type: boolean
+ */
+
 const Router = require("koa-router");
 const Carousel = require("../models/Carousel");
 const { upload } = require("../middlewares/upload");
@@ -39,7 +196,7 @@ router.put("/carousel/:id", async (ctx) => {
   const carousel = await Carousel.findById(id);
   if (!carousel) {
     ctx.status = 404;
-    ctx.body = { error: "Carousel not found" };
+    ctx.body = { error: "輪播圖未找到" };
     return;
   }
 
@@ -61,7 +218,7 @@ router.delete("/carousel/:id", async (ctx) => {
   const carousel = await Carousel.findById(id);
   if (!carousel) {
     ctx.status = 404;
-    ctx.body = { error: "Carousel not found" };
+    ctx.body = { error: "輪播圖未找到" };
     return;
   }
 

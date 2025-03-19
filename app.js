@@ -2,9 +2,12 @@ const Koa = require("koa");
 const bodyParser = require("koa-bodyparser");
 const cors = require("@koa/cors");
 const dotenv = require("dotenv");
-
+const Router = require('koa-router');
 const connectDB = require("./config/db");
 const { ensureAdminAuth} = require("./middlewares/auth");
+
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./swagger.json');
 
 // 導入路由
 const productRoutes = require("./routes/product");
@@ -29,6 +32,7 @@ connectDB().then(()=>{
 });
 
 const app = new Koa();
+const router = new Router();
 app.use(cors()); // 解決 CORS 問題
 app.use(bodyParser({
   enableTypes: ['json', 'form', 'text'], // 支援的請求類型
@@ -52,6 +56,13 @@ app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.routes());
+
+router.get('/api-docs', swaggerUi.setup(swaggerDocument));
+
+// 使用路由
+app.use(router.routes()).use(router.allowedMethods());
+
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
