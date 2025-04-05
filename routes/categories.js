@@ -294,8 +294,17 @@ router.delete('/categories/:id', async (ctx) => {
     return;
   }
 
+  // 檢查是否有產品使用此分類
+  const Product = require('../models/Product');
+  const productsUsingCategory = await Product.exists({ category: id });
+  if (productsUsingCategory) {
+    ctx.status = 400;
+    ctx.body = { error: '無法刪除已被產品使用的分類' };
+    return;
+  }
+
   await category.deleteOne();
-  ctx.body = { message: 'Category deleted' };
+  ctx.status = 204;
 });
 
 module.exports = router;
