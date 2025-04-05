@@ -117,6 +117,11 @@ const getManagementAPIToken = async () => {
     return response.data.access_token;
   } catch (error) {
     console.error('取得 Management API Token 失敗:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      throw new Error('驗證失敗：Auth0 憑證無效，請檢查設定');
+    } else if (error.response?.status === 403) {
+      throw new Error('驗證失敗：Auth0 應用程式權限不足');
+    }
     throw new Error('驗證失敗：無法取得 Management API 存取權杖');
   }
 };
@@ -135,9 +140,17 @@ router.get("/customers", async (ctx) => {
     ctx.body = { customers: response.data };
   } catch (error) {
     ctx.status = error.response?.status || 500;
+    let errorMessage = error.message;
+    
+    if (error.response?.status === 401) {
+      errorMessage = 'Auth0 驗證失敗，請確認存取權杖是否有效';
+    } else if (error.response?.status === 403) {
+      errorMessage = 'Auth0 權限不足，請確認應用程式權限設定';
+    }
+
     ctx.body = {
       error: '取得使用者列表失敗',
-      message: error.message
+      message: errorMessage
     };
   }
 });
