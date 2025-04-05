@@ -4,7 +4,7 @@
  * @openapi
  * tags:
  *   name: Customers
- *   description: 客户管理的 API
+ *   description: 客戶管理的 API
  */
 
 /**
@@ -12,10 +12,23 @@
  * /customers:
  *   get:
  *     tags: [Customers]
- *     summary: 获取客户列表
+ *     summary: 獲取客戶列表
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: 分頁頁碼
+ *       - in: query
+ *         name: per_page
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: 每頁數量
  *     responses:
  *       200:
- *         description: 成功获取客户列表
+ *         description: 成功獲取客戶列表
  *         content:
  *           application/json:
  *             schema:
@@ -26,12 +39,64 @@
  *                   items:
  *                     type: object
  *                     properties:
+ *                       user_id:
+ *                         type: string
+ *                         description: Auth0 用戶ID
  *                       email:
  *                         type: string
+ *                       email_verified:
+ *                         type: boolean
  *                       name:
  *                         type: string
+ *                       nickname:
+ *                         type: string
+ *                       picture:
+ *                         type: string
+ *                       identities:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             access_token:
+ *                               type: string
+ *                             connection:
+ *                               type: string
+ *                             user_id:
+ *                               type: string
+ *                             provider:
+ *                               type: string
+ *                             isSocial:
+ *                               type: boolean
+ *                       family_name:
+ *                         type: string
+ *                       given_name:
+ *                         type: string
+ *                       statusMessage:
+ *                         type: string
+ *                       last_login:
+ *                         type: string
+ *                         format: date-time
+ *                       last_ip:
+ *                         type: string
+ *                       logins_count:
+ *                         type: integer
+ *                       created_at:
+ *                         type: string
+ *                         format: date-time
+ *                       updated_at:
+ *                         type: string
+ *                         format: date-time
+ *                 total:
+ *                   type: integer
+ *                   description: 總用戶數
+ *                 page:
+ *                   type: integer
+ *                   description: 當前頁碼
+ *                 per_page:
+ *                   type: integer
+ *                   description: 每頁數量
  *       403:
- *         description: 权限不足
+ *         description: 權限不足
  */
 
 /**
@@ -39,7 +104,7 @@
  * /customers:
  *   post:
  *     tags: [Customers]
- *     summary: 创建新客户
+ *     summary: 創建新客戶
  *     requestBody:
  *       required: true
  *       content:
@@ -55,7 +120,7 @@
  *                 type: string
  *     responses:
  *       201:
- *         description: 客户创建成功
+ *         description: 客戶創建成功
  *         content:
  *           application/json:
  *             schema:
@@ -69,9 +134,35 @@
  *                     name:
  *                       type: string
  *       400:
- *         description: 请求参数错误
+ *         description: 請求參數錯誤
  *       403:
- *         description: 权限不足
+ *         description: 權限不足
+ */
+
+/**
+ * @openapi
+ * /customers/sync:
+ *   post:
+ *     tags: [Customers]
+ *     summary: 同步 Auth0 用戶到本地資料庫
+ *     responses:
+ *       200:
+ *         description: 同步成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 用戶同步完成
+ *                 count:
+ *                   type: integer
+ *                   description: 同步的用戶數量
+ *       403:
+ *         description: 權限不足
+ *       500:
+ *         description: 同步失敗
  */
 
 /**
@@ -79,10 +170,10 @@
  * /customers/me:
  *   get:
  *     tags: [Customers]
- *     summary: 获取当前登录客户信息
+ *     summary: 獲取當前登入客戶信息
  *     responses:
  *       200:
- *         description: 成功获取客户信息
+ *         description: 成功獲取客戶信息
  *         content:
  *           application/json:
  *             schema:
@@ -91,15 +182,46 @@
  *                 user:
  *                   type: object
  *                   properties:
+ *                     user_id:
+ *                       type: string
  *                     email:
  *                       type: string
+ *                     email_verified:
+ *                       type: boolean
  *                     name:
  *                       type: string
- *       403:
- *         description: 权限不足
+ *                     nickname:
+ *                       type: string
+ *                     picture:
+ *                       type: string
+ *                     identities:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           access_token:
+ *                             type: string
+ *                           connection:
+ *                             type: string
+ *                           user_id:
+ *                             type: string
+ *                           provider:
+ *                             type: string
+ *                           isSocial:
+ *                             type: boolean
+ *                     statusMessage:
+ *                       type: string
+ *                     last_login:
+ *                       type: string
+ *                       format: date-time
+ *       401:
+ *         description: 未經授權
+ *       404:
+ *         description: 用戶不存在
  */
 
 const Router = require("koa-router");
+const Customer = require("../models/Customer");
 const axios = require("axios");
 
 const router = new Router();
@@ -107,21 +229,26 @@ const router = new Router();
 // 使用者的 Auth0 管理員 API 訪問 token
 const getManagementAPIToken = async () => {
   try {
-    const response = await axios.post(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
+    const domain = process.env.AUTH0_DOMAIN;
+    
+    const response = await axios.post(`https://${domain}/oauth/token`, {
       client_id: process.env.AUTH0_CLIENT_ID,
       client_secret: process.env.AUTH0_CLIENT_SECRET,
-      audience: `https://${process.env.AUTH0_DOMAIN}/api/v2/`,
+      audience: `https://${domain}/api/v2/`,
       grant_type: "client_credentials",
     });
 
+    if (!response.data.access_token) {
+      throw new Error('未收到有效的存取權杖');
+    }
+
     return response.data.access_token;
   } catch (error) {
-    console.error('取得 Management API Token 失敗:', error.response?.data || error.message);
-    if (error.response?.status === 401) {
-      throw new Error('驗證失敗：Auth0 憑證無效，請檢查設定');
-    } else if (error.response?.status === 403) {
-      throw new Error('驗證失敗：Auth0 應用程式權限不足');
-    }
+    console.error('取得 Management API Token 失敗:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
     throw new Error('驗證失敗：無法取得 Management API 存取權杖');
   }
 };
@@ -129,68 +256,64 @@ const getManagementAPIToken = async () => {
 // 獲取客戶列表 (GET /customers)
 router.get("/customers", async (ctx) => {
   try {
-    const managementToken = await getManagementAPIToken();
+    // 分頁參數
+    const page = parseInt(ctx.query.page) || 0;
+    const per_page = parseInt(ctx.query.per_page) || 50;
 
-    const response = await axios.get(`https://${process.env.AUTH0_DOMAIN}/api/v2/users`, {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-      },
-    });
+    // 從本地資料庫獲取用戶列表
+    const customers = await Customer.find()
+      .skip(page * per_page)
+      .limit(per_page)
+      .sort({ updated_at: -1 });
 
-    ctx.body = { customers: response.data };
+    const total = await Customer.countDocuments();
+
+    ctx.body = { 
+      customers,
+      total,
+      page,
+      per_page
+    };
   } catch (error) {
     ctx.status = error.response?.status || 500;
-    let errorMessage = error.message;
-    
-    if (error.response?.status === 401) {
-      errorMessage = 'Auth0 驗證失敗，請確認存取權杖是否有效';
-    } else if (error.response?.status === 403) {
-      errorMessage = 'Auth0 權限不足，請確認應用程式權限設定';
-    }
-
     ctx.body = {
       error: '取得使用者列表失敗',
-      message: errorMessage
+      message: error.message
     };
   }
 });
 
-// 創建新客戶 (POST /customers)
-router.post("/customers", async (ctx) => {
+// 同步 Auth0 用戶到本地資料庫
+router.post("/customers/sync", async (ctx) => {
   try {
     const managementToken = await getManagementAPIToken();
-    const { email, password, name } = ctx.request.body;
+    const domain = process.env.AUTH0_DOMAIN;
 
-    if (!email || !password || !name) {
-      ctx.status = 400;
-      ctx.body = {
-        error: '缺少必要欄位',
-        message: '請提供 email、password 和 name'
-      };
-      return;
+    // 從 Auth0 獲取用戶列表
+    const response = await axios.get(`https://${domain}/api/v2/users`, {
+      headers: {
+        Authorization: `Bearer ${managementToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    // 更新本地資料庫
+    for (const user of response.data) {
+      await Customer.findOneAndUpdate(
+        { user_id: user.user_id },
+        user,
+        { upsert: true, new: true }
+      );
     }
 
-    const response = await axios.post(
-      `https://${process.env.AUTH0_DOMAIN}/api/v2/users`,
-      {
-        email,
-        password,
-        name,
-        connection: "Username-Password-Authentication",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${managementToken}`,
-        },
-      }
-    );
-
-    ctx.status = 201;
-    ctx.body = { customer: response.data };
+    ctx.body = { 
+      message: '用戶同步完成',
+      count: response.data.length
+    };
   } catch (error) {
     ctx.status = error.response?.status || 500;
     ctx.body = {
-      error: '建立使用者失敗',
+      error: '同步用戶失敗',
       message: error.message
     };
   }
@@ -199,12 +322,23 @@ router.post("/customers", async (ctx) => {
 // 獲取當前登入客戶信息 (GET /customers/me)
 router.get("/customers/me", async (ctx) => {
   try {
-    const user = ctx.state.user;
-    if (!user) {
+    const auth0User = ctx.state.user;
+    if (!auth0User) {
       ctx.status = 401;
       ctx.body = {
         error: '未經授權',
         message: '請先登入系統'
+      };
+      return;
+    }
+
+    // 從本地資料庫獲取用戶資料
+    const user = await Customer.findOne({ user_id: auth0User.sub });
+    if (!user) {
+      ctx.status = 404;
+      ctx.body = {
+        error: '找不到用戶',
+        message: '用戶資料不存在'
       };
       return;
     }
