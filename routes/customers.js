@@ -144,31 +144,66 @@ router.get("/customers", async (ctx) => {
 
 // 創建新客戶 (POST /customers)
 router.post("/customers", async (ctx) => {
-  const managementToken = await getManagementAPIToken();
-  const { email, password, name } = ctx.request.body;
+  try {
+    const managementToken = await getManagementAPIToken();
+    const { email, password, name } = ctx.request.body;
 
-  const response = await axios.post(
-    `https://${process.env.AUTH0_DOMAIN}/api/v2/users`,
-    {
-      email,
-      password,
-      name,
-      connection: "Username-Password-Authentication",
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${managementToken}`,
-      },
+    if (!email || !password || !name) {
+      ctx.status = 400;
+      ctx.body = {
+        error: '缺少必要欄位',
+        message: '請提供 email、password 和 name'
+      };
+      return;
     }
-  );
 
-  ctx.body = { customer: response.data };
+    const response = await axios.post(
+      `https://${process.env.AUTH0_DOMAIN}/api/v2/users`,
+      {
+        email,
+        password,
+        name,
+        connection: "Username-Password-Authentication",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${managementToken}`,
+        },
+      }
+    );
+
+    ctx.status = 201;
+    ctx.body = { customer: response.data };
+  } catch (error) {
+    ctx.status = error.response?.status || 500;
+    ctx.body = {
+      error: '建立使用者失敗',
+      message: error.message
+    };
+  }
 });
 
 // 獲取當前登入客戶信息 (GET /customers/me)
 router.get("/customers/me", async (ctx) => {
-  const user = ctx.state.user; // 在中介層中設定的解碼後用戶資料
-  ctx.body = { user };
+  try {
+    const user = ctx.state.user;
+    if (!user) {
+      ctx.status = 401;
+      ctx.body = {
+        error: '未經授權',
+        message: '請先登入系統'
+      };
+      return;
+    }
+    
+    ctx.body = { user };
+  } catch (error) {
+    ctx.status = error.response?.status || 500;
+    ctx.body = {
+      error: '取得使用者資料失敗',
+      message: error.message
+    };
+  }
 });
 
 module.exports = router;
