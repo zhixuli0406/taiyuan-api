@@ -19,33 +19,53 @@
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - userId
+ *               - items
+ *               - shippingMethod
+ *               - receiverInfo
  *             properties:
  *               userId:
  *                 type: string
+ *                 description: 用戶ID
  *               items:
  *                 type: array
+ *                 description: 訂單商品列表
  *                 items:
  *                   type: object
  *                   properties:
  *                     product:
  *                       type: string
+ *                       description: 商品ID
  *                     quantity:
  *                       type: number
+ *                       description: 購買數量
  *                     price:
  *                       type: number
- *               shippingAddress:
+ *                       description: 商品單價
+ *               shippingMethod:
+ *                 type: string
+ *                 enum: [CVS, HOME]
+ *                 description: 配送方式 (CVS=超商取貨, HOME=宅配)
+ *               receiverInfo:
  *                 type: object
+ *                 required:
+ *                   - name
+ *                   - phone
+ *                   - email
  *                 properties:
+ *                   name:
+ *                     type: string
+ *                     description: 收件人姓名
+ *                   phone:
+ *                     type: string
+ *                     description: 收件人電話
+ *                   email:
+ *                     type: string
+ *                     description: 收件人Email
  *                   address:
  *                     type: string
- *                   city:
- *                     type: string
- *                   postalCode:
- *                     type: string
- *                   country:
- *                     type: string
- *               paymentMethod:
- *                 type: string
+ *                     description: 收件地址(宅配必填)
  *     responses:
  *       201:
  *         description: 訂單創建成功
@@ -59,6 +79,8 @@
  *                 order:
  *                   type: object
  *                   properties:
+ *                     _id:
+ *                       type: string
  *                     user:
  *                       type: string
  *                     items:
@@ -74,19 +96,109 @@
  *                             type: number
  *                     totalAmount:
  *                       type: number
- *                     shippingAddress:
+ *                     shippingMethod:
+ *                       type: string
+ *                     logistics:
  *                       type: object
  *                       properties:
- *                         address:
+ *                         ReceiverName:
  *                           type: string
- *                         city:
+ *                         ReceiverPhone:
  *                           type: string
- *                         postalCode:
+ *                         ReceiverEmail:
  *                           type: string
- *                         country:
+ *                         ReceiverAddress:
  *                           type: string
+ *                     payment:
+ *                       type: object
+ *                       properties:
+ *                         MerchantTradeNo:
+ *                           type: string
+ *                         TradeDesc:
+ *                           type: string
+ *                         TradeDate:
+ *                           type: string
+ *                           format: date-time
+ *                 paymentForm:
+ *                   type: string
+ *                   description: 綠界支付表單 HTML
+ *                 logisticsForm:
+ *                   type: string
+ *                   description: 綠界物流選擇表單 HTML (僅超商取貨時提供)
  *       400:
  *         description: 請求參數錯誤
+ */
+
+/**
+ * @openapi
+ * /orders/payment/callback:
+ *   post:
+ *     tags: [Orders]
+ *     summary: 綠界支付回調
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               MerchantTradeNo:
+ *                 type: string
+ *               PaymentDate:
+ *                 type: string
+ *               PaymentType:
+ *                 type: string
+ *               PaymentTypeChargeFee:
+ *                 type: string
+ *               SimulatePaid:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 回調處理成功
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "1|OK"
+ */
+
+/**
+ * @openapi
+ * /orders/logistics/callback:
+ *   post:
+ *     tags: [Orders]
+ *     summary: 綠界物流回調
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               MerchantTradeNo:
+ *                 type: string
+ *               LogisticsType:
+ *                 type: string
+ *               LogisticsSubType:
+ *                 type: string
+ *               CVSStoreID:
+ *                 type: string
+ *               CVSStoreName:
+ *                 type: string
+ *               CVSAddress:
+ *                 type: string
+ *               CVSTelephone:
+ *                 type: string
+ *               LogisticsStatus:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 回調處理成功
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *               example: "1|OK"
  */
 
 /**
@@ -108,6 +220,8 @@
  *                   items:
  *                     type: object
  *                     properties:
+ *                       _id:
+ *                         type: string
  *                       user:
  *                         type: string
  *                       items:
@@ -123,17 +237,31 @@
  *                               type: number
  *                       totalAmount:
  *                         type: number
- *                       shippingAddress:
+ *                       status:
+ *                         type: string
+ *                         enum: [Pending, Paid, Shipped, Completed, Cancelled]
+ *                       shippingMethod:
+ *                         type: string
+ *                         enum: [CVS, HOME]
+ *                       logistics:
  *                         type: object
  *                         properties:
- *                           address:
+ *                           LogisticsStatus:
  *                             type: string
- *                           city:
+ *                           CVSStoreName:
  *                             type: string
- *                           postalCode:
+ *                           CVSAddress:
  *                             type: string
- *                           country:
+ *                       payment:
+ *                         type: object
+ *                         properties:
+ *                           isPaid:
+ *                             type: boolean
+ *                           PaymentType:
  *                             type: string
+ *                           PaymentDate:
+ *                             type: string
+ *                             format: date-time
  *       404:
  *         description: 未找到訂單
  */
@@ -157,8 +285,15 @@
  *                   items:
  *                     type: object
  *                     properties:
- *                       user:
+ *                       _id:
  *                         type: string
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           email:
+ *                             type: string
  *                       items:
  *                         type: array
  *                         items:
@@ -172,17 +307,12 @@
  *                               type: number
  *                       totalAmount:
  *                         type: number
- *                       shippingAddress:
+ *                       status:
+ *                         type: string
+ *                       logistics:
  *                         type: object
- *                         properties:
- *                           address:
- *                             type: string
- *                           city:
- *                             type: string
- *                           postalCode:
- *                             type: string
- *                           country:
- *                             type: string
+ *                       payment:
+ *                         type: object
  *       403:
  *         description: 權限不足
  */
@@ -267,12 +397,19 @@
 
 const Router = require("koa-router");
 const Order = require("../models/Order");
+const ecpay_payment = require('ecpay-payment');
+const ecpay_logistics = require('ecpay-logistics');
 
 const router = new Router();
 
 // 創建訂單
 router.post("/orders", async (ctx) => {
-  const { userId, items, shippingAddress, paymentMethod } = ctx.request.body;
+  const { 
+    userId, 
+    items, 
+    shippingMethod,
+    receiverInfo 
+  } = ctx.request.body;
 
   // 計算訂單總金額
   let totalAmount = 0;
@@ -280,18 +417,181 @@ router.post("/orders", async (ctx) => {
     totalAmount += item.price * item.quantity;
   });
 
-  // 新增訂單
+  // 生成綠界商店訂單編號
+  const merchantTradeNo = `${Date.now()}${Math.random().toString(36).substr(2, 6)}`;
+
+  // 建立訂單
   const order = new Order({
     user: userId,
     items,
-    shippingAddress,
-    paymentDetails: { method: paymentMethod },
     totalAmount,
+    shippingMethod,
+    logistics: {
+      ReceiverName: receiverInfo.name,
+      ReceiverPhone: receiverInfo.phone,
+      ReceiverEmail: receiverInfo.email,
+      ReceiverAddress: receiverInfo.address,
+    },
+    payment: {
+      MerchantTradeNo: merchantTradeNo,
+      TradeDesc: "商品購買",
+      TradeDate: new Date()
+    }
   });
 
   await order.save();
 
-  ctx.body = { message: "Order created successfully", order };
+  // 建立綠界物流訂單
+  const logisticsOptions = {
+    MerchantID: process.env.ECPAY_MERCHANT_ID,
+    HashKey: process.env.ECPAY_LOGISTICS_HASH_KEY,
+    HashIV: process.env.ECPAY_LOGISTICS_HASH_IV,
+    IsProduction: process.env.NODE_ENV === 'production',
+  };
+
+  const ecpayLogistics = new ecpay_logistics(logisticsOptions);
+
+  const logisticsParams = {
+    MerchantTradeNo: merchantTradeNo,
+    MerchantTradeDate: new Date().toLocaleString('zh-TW'),
+    LogisticsType: shippingMethod === 'CVS' ? 'CVS' : 'HOME',
+    LogisticsSubType: shippingMethod === 'CVS' ? 'FAMI' : 'TCAT', // 可依需求調整
+    GoodsAmount: totalAmount,
+    CollectionAmount: totalAmount,
+    IsCollection: 'N',
+    GoodsName: items.map(item => `${item.product.name}`).join('#'),
+    SenderName: process.env.SHOP_NAME,
+    SenderPhone: process.env.SHOP_PHONE,
+    ReceiverName: receiverInfo.name,
+    ReceiverPhone: receiverInfo.phone,
+    ReceiverEmail: receiverInfo.email,
+    ServerReplyURL: `${process.env.API_URL}/orders/logistics/callback`,
+  };
+
+  // 如果是宅配，添加地址
+  if (shippingMethod === 'HOME') {
+    logisticsParams.ReceiverAddress = receiverInfo.address;
+  }
+
+  // 建立綠界支付訂單
+  const paymentOptions = {
+    MerchantID: process.env.ECPAY_MERCHANT_ID,
+    HashKey: process.env.ECPAY_HASH_KEY,
+    HashIV: process.env.ECPAY_HASH_IV,
+    ReturnURL: `${process.env.API_URL}/orders/payment/callback`,
+    ClientBackURL: `${process.env.FRONTEND_URL}/orders/${order._id}`,
+    OrderResultURL: `${process.env.FRONTEND_URL}/orders/${order._id}/result`,
+  };
+
+  const ecpayPayment = new ecpay_payment(paymentOptions);
+  
+  const paymentParams = {
+    MerchantTradeNo: merchantTradeNo,
+    MerchantTradeDate: new Date().toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).replace(/[/:]/g, ''),
+    TotalAmount: totalAmount,
+    TradeDesc: '商品購買',
+    ItemName: items.map(item => `${item.product.name} x ${item.quantity}`).join('#'),
+    ReturnURL: paymentOptions.ReturnURL,
+    ClientBackURL: paymentOptions.ClientBackURL,
+    OrderResultURL: paymentOptions.OrderResultURL,
+  };
+
+  // 產生綠界金流表單
+  const paymentForm = ecpayPayment.payment_client.aio_check_out_all(paymentParams);
+  
+  // 如果是超商取貨，產生店鋪選擇表單
+  let logisticsForm = null;
+  if (shippingMethod === 'CVS') {
+    logisticsForm = ecpayLogistics.create_client.create_cvs_map(logisticsParams);
+  }
+
+  ctx.body = { 
+    message: "Order created successfully", 
+    order,
+    paymentForm,
+    logisticsForm
+  };
+});
+
+// 綠界支付回調
+router.post("/orders/payment/callback", async (ctx) => {
+  const { 
+    MerchantTradeNo, 
+    PaymentDate, 
+    PaymentType, 
+    PaymentTypeChargeFee, 
+    SimulatePaid 
+  } = ctx.request.body;
+
+  const order = await Order.findOne({
+    "payment.MerchantTradeNo": MerchantTradeNo
+  });
+
+  if (!order) {
+    ctx.status = 404;
+    ctx.body = { error: "Order not found" };
+    return;
+  }
+
+  // 更新支付狀態
+  order.payment.isPaid = true;
+  order.payment.PaymentDate = new Date(PaymentDate);
+  order.payment.PaymentType = PaymentType;
+  order.payment.PaymentTypeChargeFee = PaymentTypeChargeFee;
+  order.payment.SimulatePaid = SimulatePaid === 'Y';
+  order.status = "Paid";
+
+  await order.save();
+
+  ctx.body = { message: "1|OK" };
+});
+
+// 綠界物流回調
+router.post("/orders/logistics/callback", async (ctx) => {
+  const { 
+    MerchantTradeNo, 
+    LogisticsType, 
+    LogisticsSubType,
+    CVSStoreID,
+    CVSStoreName,
+    CVSAddress,
+    CVSTelephone,
+    LogisticsStatus
+  } = ctx.request.body;
+
+  const order = await Order.findOne({
+    "payment.MerchantTradeNo": MerchantTradeNo
+  });
+
+  if (!order) {
+    ctx.status = 404;
+    ctx.body = { error: "Order not found" };
+    return;
+  }
+
+  // 更新物流資訊
+  order.logistics.LogisticsType = LogisticsType;
+  order.logistics.LogisticsSubType = LogisticsSubType;
+  order.logistics.LogisticsStatus = LogisticsStatus;
+
+  if (LogisticsType === 'CVS') {
+    order.logistics.CVSStoreID = CVSStoreID;
+    order.logistics.CVSStoreName = CVSStoreName;
+    order.logistics.CVSAddress = CVSAddress;
+    order.logistics.CVSTelephone = CVSTelephone;
+  }
+
+  await order.save();
+
+  ctx.body = { message: "1|OK" };
 });
 
 // 查詢用戶訂單

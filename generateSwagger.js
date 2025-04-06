@@ -6,13 +6,13 @@ const swaggerOptions = {
     swaggerDefinition: {
         openapi: '3.0.0',
         info: {
-            title: 'Your API Title',
+            title: 'Taiyuan API',
             version: '1.0.0',
             description: 'API Description',
         },
         servers: [
             {
-                url: 'http://localhost:3000', // 您的 API 主机
+                url: 'https://api.taiyuan.dudustudio.monster', // 您的 API 主机
             },
         ],
     },
