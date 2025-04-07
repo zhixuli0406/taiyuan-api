@@ -289,8 +289,17 @@ router.get("/carousel/presigned-url", async (ctx) => {
     const urls = await generatePresignedUrl("carousels", fileType);
     ctx.body = urls;
   } catch (error) {
+    console.error('Error handling presigned URL request:', {
+      error: error.message,
+      fileType,
+      stack: error.stack
+    });
+
     ctx.status = 500;
-    ctx.body = { error: "生成預簽名 URL 失敗" };
+    ctx.body = { 
+      error: "生成預簽名 URL 失敗",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    };
   }
 });
 

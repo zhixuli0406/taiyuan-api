@@ -95,25 +95,46 @@ const generatePresignedUrl = async (folder, fileType) => {
     Expires: 60 * 5, // URL 有效期 5 分鐘
     ContentType: `image/${fileType.replace('.', '')}`,
     ACL: 'public-read',
-    Conditions: [
-      ['content-length-range', 0, 10485760], // 限制文件大小 10MB
-      ['starts-with', '$Content-Type', 'image/'], // 限制文件類型
-    ],
   };
 
   try {
+    // 檢查必要的環境變量
+    if (!process.env.S3_BUCKET_NAME) {
+      throw new Error('S3_BUCKET_NAME environment variable is not set');
+    }
+    if (!process.env.CLOUD_FRONT_URL) {
+      throw new Error('CLOUD_FRONT_URL environment variable is not set');
+    }
+
+    console.log('Generating presigned URL with params:', {
+      Bucket: params.Bucket,
+      Key: params.Key,
+      ContentType: params.ContentType
+    });
+
     const signedUrl = await S3.getSignedUrlPromise('putObject', params);
+    
+    console.log('Successfully generated presigned URL');
+    
     return {
       uploadUrl: signedUrl,
       imageUrl: process.env.CLOUD_FRONT_URL + fileName,
       headers: {
-        'Content-Type': `image/${fileType.replace('.', '')}`,
+        'Content-Type': params.ContentType,
         'x-amz-acl': 'public-read',
       }
     };
   } catch (error) {
-    console.error("Error generating presigned URL:", error);
-    throw new Error(`Error generating presigned URL: ${error.message}`);
+    console.error('Error in generatePresignedUrl:', {
+      error: error.message,
+      stack: error.stack,
+      params: {
+        Bucket: params.Bucket,
+        Key: params.Key,
+        ContentType: params.ContentType
+      }
+    });
+    throw error;
   }
 };
 
