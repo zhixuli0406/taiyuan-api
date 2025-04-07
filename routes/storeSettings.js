@@ -151,7 +151,9 @@ router.put("/store-settings", async (ctx) => {
  *     tags:
  *       - Store Settings
  *     summary: 獲取商店 Logo 上傳用的預簽名 URL
- *     description: 生成用於直接上傳圖片到 S3 的預簽名 URL
+ *     description: |
+ *       生成用於直接上傳圖片到 S3 的預簽名 URL。
+ *       注意：上傳時需要包含返回的 headers。
  *     parameters:
  *       - name: fileType
  *         in: query
@@ -177,6 +179,16 @@ router.put("/store-settings", async (ctx) => {
  *                   type: string
  *                   description: 上傳完成後的圖片訪問 URL
  *                   example: "https://cdn.example.com/logos/image.jpg"
+ *                 headers:
+ *                   type: object
+ *                   description: 上傳時需要的 headers
+ *                   properties:
+ *                     'Content-Type':
+ *                       type: string
+ *                       example: "image/jpeg"
+ *                     'x-amz-acl':
+ *                       type: string
+ *                       example: "public-read"
  *       400:
  *         description: 不支持的文件類型
  *         content:

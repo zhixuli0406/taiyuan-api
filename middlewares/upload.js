@@ -94,13 +94,22 @@ const generatePresignedUrl = async (folder, fileType) => {
     Key: fileName,
     Expires: 60 * 5, // URL 有效期 5 分鐘
     ContentType: `image/${fileType.replace('.', '')}`,
+    ACL: 'public-read',
+    Conditions: [
+      ['content-length-range', 0, 10485760], // 限制文件大小 10MB
+      ['starts-with', '$Content-Type', 'image/'], // 限制文件類型
+    ],
   };
 
   try {
     const signedUrl = await S3.getSignedUrlPromise('putObject', params);
     return {
       uploadUrl: signedUrl,
-      imageUrl: process.env.CLOUD_FRONT_URL + fileName
+      imageUrl: process.env.CLOUD_FRONT_URL + fileName,
+      headers: {
+        'Content-Type': `image/${fileType.replace('.', '')}`,
+        'x-amz-acl': 'public-read',
+      }
     };
   } catch (error) {
     console.error("Error generating presigned URL:", error);
