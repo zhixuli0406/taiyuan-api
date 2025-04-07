@@ -6,11 +6,35 @@ const router = new Router();
 
 /**
  * @openapi
+ * tags:
+ *   - name: Store Settings
+ *     description: 商店設置管理 API
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     StoreSetting:
+ *       type: object
+ *       properties:
+ *         appearance:
+ *           type: object
+ *           properties:
+ *             logo:
+ *               type: string
+ *               description: 商店 Logo 的 URL
+ *         # 可以根據實際的 StoreSetting model 添加其他屬性
+ */
+
+/**
+ * @openapi
  * /store-settings:
  *   get:
  *     tags:
  *       - Store Settings
  *     summary: 讀取商店設置
+ *     description: 獲取商店的所有設置信息
  *     responses:
  *       200:
  *         description: 成功獲取商店設置
@@ -20,12 +44,26 @@ const router = new Router();
  *               type: object
  *               properties:
  *                 settings:
- *                   type: object
- *                   additionalProperties: true
+ *                   $ref: '#/components/schemas/StoreSetting'
  *       404:
  *         description: 商店設置未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "商店設置未找到"
  *       500:
  *         description: 伺服器錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.get("/store-settings", async (ctx) => {
   try {
@@ -113,13 +151,16 @@ router.put("/store-settings", async (ctx) => {
  *     tags:
  *       - Store Settings
  *     summary: 獲取商店 Logo 上傳用的預簽名 URL
+ *     description: 生成用於直接上傳圖片到 S3 的預簽名 URL
  *     parameters:
  *       - name: fileType
  *         in: query
  *         required: true
- *         description: 文件類型 (.jpg, .png, .gif)
+ *         description: 文件類型，必須是 .jpg、.jpeg、.png 或 .gif
  *         schema:
  *           type: string
+ *           enum: ['.jpg', '.jpeg', '.png', '.gif']
+ *           example: '.jpg'
  *     responses:
  *       200:
  *         description: 成功獲取預簽名 URL
@@ -131,11 +172,31 @@ router.put("/store-settings", async (ctx) => {
  *                 uploadUrl:
  *                   type: string
  *                   description: 用於上傳的預簽名 URL
+ *                   example: "https://s3.amazonaws.com/bucket/..."
  *                 imageUrl:
  *                   type: string
- *                   description: 上傳後的圖片訪問 URL
+ *                   description: 上傳完成後的圖片訪問 URL
+ *                   example: "https://cdn.example.com/logos/image.jpg"
  *       400:
  *         description: 不支持的文件類型
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "不支持的文件類型"
+ *       500:
+ *         description: 生成預簽名 URL 失敗
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "生成預簽名 URL 失敗"
  */
 router.get("/store-settings/logo/presigned-url", async (ctx) => {
   const { fileType } = ctx.query;
@@ -163,16 +224,20 @@ router.get("/store-settings/logo/presigned-url", async (ctx) => {
  *     tags:
  *       - Store Settings
  *     summary: 更新商店 Logo
+ *     description: 使用已上傳到 S3 的圖片 URL 更新商店 Logo
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - imageUrl
  *             properties:
  *               imageUrl:
  *                 type: string
  *                 description: 已上傳到 S3 的圖片 URL
+ *                 example: "https://cdn.example.com/logos/image.jpg"
  *     responses:
  *       200:
  *         description: Logo 更新成功
@@ -183,12 +248,40 @@ router.get("/store-settings/logo/presigned-url", async (ctx) => {
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: "Logo updated successfully"
  *                 logo:
  *                   type: string
+ *                   description: 更新後的 Logo URL
+ *                   example: "https://cdn.example.com/logos/image.jpg"
  *       400:
  *         description: 無效的圖片 URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "無效的圖片 URL"
  *       404:
  *         description: 商店設置未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "商店設置未找到"
+ *       500:
+ *         description: 伺服器錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.put("/store-settings/logo", async (ctx) => {
   const { imageUrl } = ctx.request.body;
