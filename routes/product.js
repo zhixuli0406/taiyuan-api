@@ -398,28 +398,72 @@
  *         description: 产品未找到
  */
 
+/**
+ * @openapi
+ * /products/presigned-url:
+ *   get:
+ *     tags: [Products]
+ *     summary: 獲取產品圖片上傳用的預簽名 URL
+ *     parameters:
+ *       - name: fileType
+ *         in: query
+ *         required: true
+ *         description: 文件類型 (.jpg, .png, .gif)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取預簽名 URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 uploadUrl:
+ *                   type: string
+ *                 imageUrl:
+ *                   type: string
+ */
+
 const Router = require("koa-router");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
-const { uploadBase64ImageToS3 } = require("../middlewares/upload");
+const { uploadBase64ImageToS3, generatePresignedUrl } = require("../middlewares/upload");
 
 const router = new Router();
 
+// 獲取預簽名 URL
+router.get("/products/presigned-url", async (ctx) => {
+  const { fileType } = ctx.query;
+  
+  if (!fileType.match(/\.(jpg|jpeg|png|gif)$/i)) {
+    ctx.status = 400;
+    ctx.body = { error: "不支持的文件類型" };
+    return;
+  }
+
+  try {
+    const urls = await generatePresignedUrl("products", fileType);
+    ctx.body = urls;
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { error: "生成預簽名 URL 失敗" };
+  }
+});
+
 // 創建產品 (POST /products)
 router.post("/products", async (ctx) => {
-  const {
-    name,
-    description,
-    price,
-    category,
-    images,
-    variants,
-    isCustomizable,
-    customizableFields,
-    stock,
-    transport,
-    isFeatured,
-  } = ctx.request.body;
+  const { name, description, price, category, images, ...rest } = ctx.request.body;
+
+  // 驗證所有圖片 URL
+  if (images && Array.isArray(images)) {
+    const invalidImages = images.filter(url => !url.startsWith(process.env.CLOUD_FRONT_URL));
+    if (invalidImages.length > 0) {
+      ctx.status = 400;
+      ctx.body = { error: "包含無效的圖片 URL" };
+      return;
+    }
+  }
 
   // 驗證分類是否存在
   const existingCategory = await Category.findById(category);
@@ -448,12 +492,7 @@ router.post("/products", async (ctx) => {
     category,
     categoryName,
     images: uploadedImages,
-    variants,
-    isCustomizable,
-    customizableFields,
-    stock,
-    transport,
-    isFeatured,
+    ...rest,
   });
 
   await product.save();

@@ -86,4 +86,33 @@ const deleteImageFromS3 = async (key) => {
   }
 }
 
-module.exports = { upload, uploadImageToS3, uploadBase64ImageToS3, listImagesFromS3, deleteImageFromS3 };
+const generatePresignedUrl = async (folder, fileType) => {
+  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 8)}${fileType}`;
+  
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: fileName,
+    Expires: 60 * 5, // URL 有效期 5 分鐘
+    ContentType: `image/${fileType.replace('.', '')}`,
+  };
+
+  try {
+    const signedUrl = await S3.getSignedUrlPromise('putObject', params);
+    return {
+      uploadUrl: signedUrl,
+      imageUrl: process.env.CLOUD_FRONT_URL + fileName
+    };
+  } catch (error) {
+    console.error("Error generating presigned URL:", error);
+    throw new Error(`Error generating presigned URL: ${error.message}`);
+  }
+};
+
+module.exports = { 
+  upload, 
+  uploadImageToS3, 
+  uploadBase64ImageToS3, 
+  listImagesFromS3, 
+  deleteImageFromS3,
+  generatePresignedUrl  // 導出新函數
+};
