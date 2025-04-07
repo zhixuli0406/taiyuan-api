@@ -447,25 +447,30 @@
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖標題"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖描述"
                   },
                   "link": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖連結"
                   },
                   "order": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "顯示順序"
                   },
                   "image": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "base64",
+                    "description": "Base64 格式的圖片"
                   }
                 }
               }
@@ -548,19 +553,29 @@
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖標題"
                   },
                   "description": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖描述"
                   },
                   "link": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "輪播圖連結"
                   },
                   "order": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "顯示順序"
                   },
                   "isActive": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "是否啟用"
+                  },
+                  "image": {
+                    "type": "string",
+                    "format": "base64",
+                    "description": "Base64 格式的新圖片（可選）"
                   }
                 }
               }
@@ -613,6 +628,47 @@
           },
           "404": {
             "description": "輪播圖未找到"
+          }
+        }
+      }
+    },
+    "/carousel/presigned-url": {
+      "get": {
+        "tags": [
+          "Carousels"
+        ],
+        "summary": "獲取輪播圖上傳用的預簽名 URL",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型 (.jpg, .png, .gif)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string",
+                      "description": "用於上傳的預簽名 URL"
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "上傳後的圖片訪問 URL"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3103,6 +3159,45 @@
         }
       }
     },
+    "/products/presigned-url": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "獲取產品圖片上傳用的預簽名 URL",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型 (.jpg, .png, .gif)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string"
+                    },
+                    "imageUrl": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/store-settings": {
       "get": {
         "tags": [
@@ -3179,6 +3274,50 @@
         }
       }
     },
+    "/store-settings/logo/presigned-url": {
+      "get": {
+        "tags": [
+          "Store Settings"
+        ],
+        "summary": "獲取商店 Logo 上傳用的預簽名 URL",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型 (.jpg, .png, .gif)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string",
+                      "description": "用於上傳的預簽名 URL"
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "上傳後的圖片訪問 URL"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "不支持的文件類型"
+          }
+        }
+      }
+    },
     "/store-settings/logo": {
       "put": {
         "tags": [
@@ -3188,13 +3327,13 @@
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "logo": {
+                  "imageUrl": {
                     "type": "string",
-                    "format": "binary"
+                    "description": "已上傳到 S3 的圖片 URL"
                   }
                 }
               }
@@ -3221,13 +3360,10 @@
             }
           },
           "400": {
-            "description": "未提供文件"
+            "description": "無效的圖片 URL"
           },
           "404": {
             "description": "商店設置未找到"
-          },
-          "500": {
-            "description": "伺服器錯誤"
           }
         }
       }
@@ -3260,25 +3396,32 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖 ID"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖標題"
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖描述"
           },
           "imageUrl": {
-            "type": "string"
+            "type": "string",
+            "description": "圖片 URL"
           },
           "link": {
-            "type": "string"
+            "type": "string",
+            "description": "輪播圖連結"
           },
           "order": {
-            "type": "number"
+            "type": "number",
+            "description": "顯示順序"
           },
           "isActive": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "是否啟用"
           }
         }
       },

@@ -1,6 +1,6 @@
 const Router = require("koa-router");
 const StoreSetting = require("../models/StoreSetting");
-const { upload, uploadImageToS3 } = require("../middlewares/upload");
+const { generatePresignedUrl, deleteImageFromS3 } = require("../middlewares/upload");
 
 const router = new Router();
 
@@ -108,6 +108,56 @@ router.put("/store-settings", async (ctx) => {
 
 /**
  * @openapi
+ * /store-settings/logo/presigned-url:
+ *   get:
+ *     tags:
+ *       - Store Settings
+ *     summary: 獲取商店 Logo 上傳用的預簽名 URL
+ *     parameters:
+ *       - name: fileType
+ *         in: query
+ *         required: true
+ *         description: 文件類型 (.jpg, .png, .gif)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取預簽名 URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 uploadUrl:
+ *                   type: string
+ *                   description: 用於上傳的預簽名 URL
+ *                 imageUrl:
+ *                   type: string
+ *                   description: 上傳後的圖片訪問 URL
+ *       400:
+ *         description: 不支持的文件類型
+ */
+router.get("/store-settings/logo/presigned-url", async (ctx) => {
+  const { fileType } = ctx.query;
+  
+  // 驗證文件類型
+  if (!fileType.match(/\.(jpg|jpeg|png|gif)$/i)) {
+    ctx.status = 400;
+    ctx.body = { error: "不支持的文件類型" };
+    return;
+  }
+
+  try {
+    const urls = await generatePresignedUrl("logos", fileType);
+    ctx.body = urls;
+  } catch (error) {
+    ctx.status = 500;
+    ctx.body = { error: "生成預簽名 URL 失敗" };
+  }
+});
+
+/**
+ * @openapi
  * /store-settings/logo:
  *   put:
  *     tags:
@@ -116,13 +166,13 @@ router.put("/store-settings", async (ctx) => {
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
  *             properties:
- *               logo:
+ *               imageUrl:
  *                 type: string
- *                 format: binary
+ *                 description: 已上傳到 S3 的圖片 URL
  *     responses:
  *       200:
  *         description: Logo 更新成功
@@ -136,18 +186,17 @@ router.put("/store-settings", async (ctx) => {
  *                 logo:
  *                   type: string
  *       400:
- *         description: 未提供文件
+ *         description: 無效的圖片 URL
  *       404:
  *         description: 商店設置未找到
- *       500:
- *         description: 伺服器錯誤
  */
-router.put("/store-settings/logo", upload.single("logo"), async (ctx) => {
-  const file = ctx.file;
+router.put("/store-settings/logo", async (ctx) => {
+  const { imageUrl } = ctx.request.body;
 
-  if (!file) {
+  // 驗證 imageUrl 是否來自允許的 domain
+  if (!imageUrl || !imageUrl.startsWith(process.env.CLOUD_FRONT_URL)) {
     ctx.status = 400;
-    ctx.body = { error: "No file provided" };
+    ctx.body = { error: "無效的圖片 URL" };
     return;
   }
 
@@ -160,21 +209,20 @@ router.put("/store-settings/logo", upload.single("logo"), async (ctx) => {
       return;
     }
 
-    // 如果已經存在舊的 Logo 文件，提取舊文件的 S3 Key 並刪除
-    const oldLogoUrl = settings.appearance.logo;
-    if (oldLogoUrl) {
-      const oldLogoKey = oldLogoUrl.split(".com/")[1]; // 解析文件的 Key
-      await deleteFileFromS3(oldLogoKey); // 刪除舊文件
+    // 如果已經存在舊的 Logo，刪除它
+    if (settings.appearance.logo) {
+      const oldLogoKey = settings.appearance.logo.replace(process.env.CLOUD_FRONT_URL, '');
+      await deleteImageFromS3(oldLogoKey);
     }
 
-    // 上傳新文件至 S3
-    const newLogoUrl = await uploadImageToS3(file, "logos");
-
     // 更新商店設定中的 Logo URL
-    settings.appearance.logo = newLogoUrl;
+    settings.appearance.logo = imageUrl;
     await settings.save();
 
-    ctx.body = { message: "Logo updated successfully", logo: newLogoUrl };
+    ctx.body = { 
+      message: "Logo updated successfully", 
+      logo: imageUrl 
+    };
   } catch (error) {
     ctx.status = 500;
     ctx.body = { error: error.message };
