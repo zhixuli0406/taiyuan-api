@@ -28,7 +28,24 @@ connectDB().then(()=>{
 });
 
 const app = new Koa();
-app.use(cors()); // 解決 CORS 問題
+app.use(cors({
+  origin: (ctx) => {
+    const allowedOrigins = [
+      'http://localhost:5173',    // Vite 開發服務器
+      'http://localhost:3000',    // 其他開發環境
+      'https://your-production-domain.com'  // 生產環境
+    ];
+    
+    const origin = ctx.header.origin;
+    if (allowedOrigins.includes(origin)) {
+      return origin;
+    }
+    return allowedOrigins[0];
+  },
+  credentials: true,
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+}));
 app.use(bodyParser({
   enableTypes: ['json', 'form', 'text'], // 支援的請求類型
   jsonLimit: '100mb', // JSON 格式的限制
@@ -51,6 +68,20 @@ app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.routes());
+
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = err.status || 500;
+    ctx.body = {
+      error: err.message
+    };
+    // 確保錯誤響應也包含 CORS 頭
+    ctx.set('Access-Control-Allow-Origin', ctx.header.origin || '*');
+    ctx.app.emit('error', err, ctx);
+  }
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
