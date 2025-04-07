@@ -3,16 +3,16 @@ const exemptRoutes = ["/admin/login"];
 const jwt = require("jsonwebtoken");
 
 const ensureAdminAuth = async (ctx, next) => {
-  const token = ctx.headers.authorization?.split(" ")[1];
-
-  if (exemptRoutes.includes(ctx.path)) {
-    await next();
-    return;
+  // 如果是 OPTIONS 請求，直接放行
+  if (ctx.method === 'OPTIONS') {
+    return next();
   }
-  
+
+  // 檢查 token 等認證邏輯
+  const token = ctx.headers.authorization?.split(' ')[1];
   if (!token) {
     ctx.status = 401;
-    ctx.body = { error: "No authorization token provided" };
+    ctx.body = { error: "No token provided" };
     return;
   }
 
@@ -22,7 +22,7 @@ const ensureAdminAuth = async (ctx, next) => {
     await next();
   } catch (error) {
     ctx.status = 401;
-    ctx.body = { error: "Invalid or expired token" ,fullError: error};
+    ctx.body = { error: "Invalid token" };
   }
 };
 

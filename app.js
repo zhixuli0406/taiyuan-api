@@ -63,8 +63,6 @@ app.use(bodyParser({
   textLimit: '100mb', // 純文本數據大小限制
 }));
 
-app.use(ensureAdminAuth);
-
 // 使用路由
 app.use(productRoutes.routes());
 app.use(authRoutes.routes());

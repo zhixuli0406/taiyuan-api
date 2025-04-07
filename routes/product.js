@@ -429,6 +429,7 @@ const Router = require("koa-router");
 const Product = require("../models/Product");
 const Category = require("../models/Category");
 const { uploadBase64ImageToS3, generatePresignedUrl } = require("../middlewares/upload");
+const { ensureAdminAuth } = require("../middlewares/auth");
 
 const router = new Router();
 
@@ -452,7 +453,7 @@ router.get("/products/presigned-url", async (ctx) => {
 });
 
 // 創建產品 (POST /products)
-router.post("/products", async (ctx) => {
+router.post("/products", ensureAdminAuth, async (ctx) => {
   const { name, description, price, category, images, ...rest } = ctx.request.body;
 
   // 驗證所有圖片 URL
@@ -533,7 +534,7 @@ router.get("/products/:id", async (ctx) => {
 });
 
 // 更新產品 (PUT /products/:id)
-router.put("/products/:id", async (ctx) => {
+router.put("/products/:id", ensureAdminAuth, async (ctx) => {
   const { id } = ctx.params;
   const {
     name,
@@ -587,7 +588,7 @@ router.put("/products/:id", async (ctx) => {
 });
 
 // 刪除產品 (DELETE /products/:id)
-router.delete("/products/:id", async (ctx) => {
+router.delete("/products/:id", ensureAdminAuth, async (ctx) => {
   const { id } = ctx.params;
 
   const product = await Product.findById(id);
