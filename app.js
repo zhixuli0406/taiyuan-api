@@ -28,36 +28,31 @@ connectDB().then(()=>{
 });
 
 const app = new Koa();
+
+// 將 CORS 中間件放在最前面
 app.use(cors({
-  origin: (ctx) => {
-    const allowedOrigins = [
-      'http://localhost:5173',    // Vite 開發服務器
-      'http://localhost:3000',    // 其他開發環境
-      'https://your-production-domain.com'  // 生產環境
-    ];
-    
-    const origin = ctx.header.origin;
-    if (allowedOrigins.includes(origin)) {
-      return origin;
-    }
-    return allowedOrigins[0];
-  },
+  origin: '*', // 暫時允許所有來源
   credentials: true,
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'x-amz-acl'],
+  exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
+  maxAge: 5 // Preflight 請求的緩存時間
 }));
 
+// 錯誤處理中間件
 app.use(async (ctx, next) => {
+  const start = Date.now();
+  console.log(`${ctx.method} ${ctx.url} - Request started`);
+  
   try {
     await next();
+    
+    const ms = Date.now() - start;
+    console.log(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms`);
   } catch (err) {
-    ctx.status = err.status || 500;
-    ctx.body = {
-      error: err.message
-    };
-    // 確保錯誤響應也包含 CORS 頭
-    ctx.set('Access-Control-Allow-Origin', ctx.header.origin || '*');
-    ctx.app.emit('error', err, ctx);
+    const ms = Date.now() - start;
+    console.error(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms - Error:`, err);
+    throw err;
   }
 });
 
