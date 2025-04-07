@@ -153,13 +153,18 @@
  *   get:
  *     tags: [Carousels]
  *     summary: 獲取輪播圖上傳用的預簽名 URL
+ *     description: |
+ *       生成用於直接上傳圖片到 S3 的預簽名 URL。
+ *       注意：上傳時需要包含返回的 headers。
  *     parameters:
  *       - name: fileType
  *         in: query
  *         required: true
- *         description: 文件類型 (.jpg, .png, .gif)
+ *         description: 文件類型，必須是 .jpg、.jpeg、.png 或 .gif
  *         schema:
  *           type: string
+ *           enum: ['.jpg', '.jpeg', '.png', '.gif']
+ *           example: '.jpg'
  *     responses:
  *       200:
  *         description: 成功獲取預簽名 URL
@@ -171,9 +176,41 @@
  *                 uploadUrl:
  *                   type: string
  *                   description: 用於上傳的預簽名 URL
+ *                   example: "https://s3.amazonaws.com/bucket/..."
  *                 imageUrl:
  *                   type: string
- *                   description: 上傳後的圖片訪問 URL
+ *                   description: 上傳完成後的圖片訪問 URL
+ *                   example: "https://cdn.example.com/carousels/image.jpg"
+ *                 headers:
+ *                   type: object
+ *                   description: 上傳時需要的 headers
+ *                   properties:
+ *                     'Content-Type':
+ *                       type: string
+ *                       example: "image/jpeg"
+ *                     'x-amz-acl':
+ *                       type: string
+ *                       example: "public-read"
+ *       400:
+ *         description: 不支持的文件類型
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "不支持的文件類型"
+ *       500:
+ *         description: 生成預簽名 URL 失敗
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "生成預簽名 URL 失敗"
  */
 
 /**
@@ -257,7 +294,7 @@ router.get("/carousel/presigned-url", async (ctx) => {
   }
 });
 
-// 修改創建輪播圖的路由
+// 修改創建輪播圖的路由，使用 imageUrl 而不是 base64 圖片
 router.post("/carousel", async (ctx) => {
   const { title, description, link, order, imageUrl } = ctx.request.body;
   
