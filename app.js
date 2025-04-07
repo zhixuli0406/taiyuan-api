@@ -29,9 +29,21 @@ connectDB().then(()=>{
 
 const app = new Koa();
 
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://taiyuan.dudustudio.monster',
+  // 添加其他允許的域名
+];
+
 // 將 CORS 中間件放在最前面
 app.use(cors({
-  origin: '*', // 暫時允許所有來源
+  origin: (ctx) => {
+    const requestOrigin = ctx.get('Origin');
+    if (allowedOrigins.includes(requestOrigin)) {
+      return requestOrigin;
+    }
+    return false; // 不允許其他來源
+  },
   credentials: true,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'x-amz-acl'],
