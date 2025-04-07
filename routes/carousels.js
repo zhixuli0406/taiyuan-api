@@ -159,13 +159,20 @@
 const Router = require("koa-router");
 const Carousel = require("../models/Carousel");
 const { upload } = require("../middlewares/upload");
+const { uploadBase64ImageToS3 } = require("../middlewares/upload");
 
 const router = new Router();
 
 // 創建新的輪播圖 (POST /carousel)
-router.post("/carousel", upload.single("image"), async (ctx) => {
-  const { title, description, link, order } = ctx.request.body;
-  const imageUrl = ctx.file.location; // S3 上的圖片 URL
+router.post("/carousel", async (ctx) => {
+  const { title, description, link, order, image } = ctx.request.body;
+  
+  let imageUrl = null;
+  if (image) {
+    console.log('Uploading carousel image starting...');
+    imageUrl = await uploadBase64ImageToS3(image, "carousels");
+    console.log(imageUrl);
+  }
 
   const newCarousel = new Carousel({
     title,
@@ -191,7 +198,7 @@ router.get("/carousel", async (ctx) => {
 // 更新輪播圖 (PUT /carousel/:id)
 router.put("/carousel/:id", async (ctx) => {
   const { id } = ctx.params;
-  const { title, description, link, order, isActive } = ctx.request.body;
+  const { title, description, link, order, isActive, image } = ctx.request.body;
 
   const carousel = await Carousel.findById(id);
   if (!carousel) {
@@ -200,12 +207,20 @@ router.put("/carousel/:id", async (ctx) => {
     return;
   }
 
+  let imageUrl = carousel.imageUrl;
+  if (image) {
+    console.log('Uploading carousel image starting...');
+    imageUrl = await uploadBase64ImageToS3(image, "carousels");
+    console.log(imageUrl);
+  }
+
   // 更新字段
   carousel.title = title ?? carousel.title;
   carousel.description = description ?? carousel.description;
   carousel.link = link ?? carousel.link;
   carousel.order = order ?? carousel.order;
   carousel.isActive = isActive ?? carousel.isActive;
+  carousel.imageUrl = imageUrl;
 
   await carousel.save();
   ctx.body = { message: "Carousel updated successfully", carousel };
