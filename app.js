@@ -46,6 +46,21 @@ app.use(cors({
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
 }));
+
+app.use(async (ctx, next) => {
+  try {
+    await next();
+  } catch (err) {
+    ctx.status = err.status || 500;
+    ctx.body = {
+      error: err.message
+    };
+    // 確保錯誤響應也包含 CORS 頭
+    ctx.set('Access-Control-Allow-Origin', ctx.header.origin || '*');
+    ctx.app.emit('error', err, ctx);
+  }
+});
+
 app.use(bodyParser({
   enableTypes: ['json', 'form', 'text'], // 支援的請求類型
   jsonLimit: '100mb', // JSON 格式的限制
@@ -68,20 +83,6 @@ app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.routes());
-
-app.use(async (ctx, next) => {
-  try {
-    await next();
-  } catch (err) {
-    ctx.status = err.status || 500;
-    ctx.body = {
-      error: err.message
-    };
-    // 確保錯誤響應也包含 CORS 頭
-    ctx.set('Access-Control-Allow-Origin', ctx.header.origin || '*');
-    ctx.app.emit('error', err, ctx);
-  }
-});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
