@@ -169,7 +169,11 @@ const generatePresignedUrl = async (folder, fileType) => {
       ['content-length-range', 0, 10485760], // 限制文件大小為 10MB
       { 'x-amz-acl': 'public-read' },
       { 'Cache-Control': 'max-age=31536000' }
-    ]
+    ],
+    // 添加認證相關參數
+    SignatureVersion: 'v4',
+    SigningMethod: 's3v4',
+    SigningRegion: process.env.AWS_REGION || 'us-east-1'
   };
 
   try {
@@ -180,26 +184,29 @@ const generatePresignedUrl = async (folder, fileType) => {
     if (!process.env.CLOUD_FRONT_URL) {
       throw new Error('CLOUD_FRONT_URL environment variable is not set');
     }
+    if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+      throw new Error('AWS credentials are not properly configured');
+    }
 
     console.log('Generating presigned URL with params:', {
       Bucket: params.Bucket,
       Key: params.Key,
-      ContentType: params.ContentType
+      ContentType: params.ContentType,
+      Region: params.SigningRegion
     });
 
-    // 使用 createPresignedPost 而不是 getSignedUrl
+    // 使用 getSignedUrl 而不是 createPresignedPost
     const signedUrl = await new Promise((resolve, reject) => {
-      S3.createPresignedPost(params, (err, data) => {
+      S3.getSignedUrl('putObject', params, (err, url) => {
         if (err) reject(err);
-        else resolve(data);
+        else resolve(url);
       });
     });
     
     console.log('Successfully generated presigned URL');
     
     return {
-      uploadUrl: signedUrl.url,
-      fields: signedUrl.fields,
+      uploadUrl: signedUrl,
       imageUrl: process.env.CLOUD_FRONT_URL + fileName,
       headers: {
         'Content-Type': params.ContentType,
@@ -214,7 +221,8 @@ const generatePresignedUrl = async (folder, fileType) => {
       params: {
         Bucket: params.Bucket,
         Key: params.Key,
-        ContentType: params.ContentType
+        ContentType: params.ContentType,
+        Region: params.SigningRegion
       }
     });
     throw error;
