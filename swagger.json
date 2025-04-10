@@ -1760,6 +1760,295 @@
         }
       }
     },
+    "/images/presigned-url": {
+      "get": {
+        "tags": [
+          "Images"
+        ],
+        "summary": "獲取圖片上傳用的預簽名 URL",
+        "description": "生成用於直接上傳圖片到 S3 的預簽名 URL",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "query",
+            "required": true,
+            "description": "文件類型，必須是 .jpg、.jpeg、.png 或 .gif",
+            "schema": {
+              "type": "string",
+              "enum": [
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif"
+              ],
+              "example": ".jpg"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功獲取預簽名 URL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploadUrl": {
+                      "type": "string",
+                      "description": "用於上傳的預簽名 URL",
+                      "example": "https://s3.amazonaws.com/bucket/..."
+                    },
+                    "imageUrl": {
+                      "type": "string",
+                      "description": "上傳完成後的圖片訪問 URL",
+                      "example": "https://cdn.example.com/images/image.jpg"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "description": "上傳時需要的 headers",
+                      "properties": {
+                        "Content-Type": {
+                          "type": "string",
+                          "example": "image/jpeg"
+                        },
+                        "x-amz-acl": {
+                          "type": "string",
+                          "example": "public-read"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "不支持的文件類型",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "不支持的文件類型"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "生成預簽名 URL 失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "生成預簽名 URL 失敗"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images": {
+      "get": {
+        "tags": [
+          "Images"
+        ],
+        "summary": "獲取圖片列表",
+        "description": "從 S3 獲取所有圖片並返回 CloudFront URL",
+        "responses": {
+          "200": {
+            "description": "成功獲取圖片列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "images": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Image"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "伺服器錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "獲取圖片列表失敗"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/{key}": {
+      "delete": {
+        "tags": [
+          "Images"
+        ],
+        "summary": "刪除圖片",
+        "description": "從 S3 中刪除指定圖片",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "description": "圖片在 S3 中的 key",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "圖片刪除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "圖片刪除成功"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "圖片未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "圖片未找到"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "伺服器錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "刪除圖片失敗"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/images/{id}": {
+      "put": {
+        "tags": [
+          "Images"
+        ],
+        "summary": "更新圖片信息",
+        "description": "更新圖片的標題和描述",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "圖片的 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "圖片標題"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "圖片描述"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "圖片更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Image updated successfully"
+                    },
+                    "image": {
+                      "$ref": "#/components/schemas/Image"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "圖片未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Image not found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/inventory": {
       "post": {
         "tags": [
@@ -3708,6 +3997,19 @@
           }
         }
       },
+      "Image": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "圖片的 CloudFront URL"
+          },
+          "key": {
+            "type": "string",
+            "description": "圖片在 S3 中的 key"
+          }
+        }
+      },
       "StoreSetting": {
         "type": "object",
         "properties": {
@@ -3837,6 +4139,10 @@
     {
       "name": "Customers",
       "description": "客戶管理的 API"
+    },
+    {
+      "name": "Images",
+      "description": "圖片管理 API"
     },
     {
       "name": "Inventory",

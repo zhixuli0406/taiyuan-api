@@ -1,6 +1,6 @@
 // src/routes/images.js
 const Router = require("koa-router");
-const { upload, uploadImageToS3, listImagesFromS3, deleteImageFromS3 } = require("../middlewares/upload");
+const { upload, uploadImageToS3, listImagesFromS3, deleteImageFromS3, generatePresignedUrl } = require("../middlewares/upload");
 const Image = require("../models/Image");
 
 const router = new Router();
@@ -29,43 +29,48 @@ const router = new Router();
 
 /**
  * @openapi
- * /images:
- *   post:
+ * /images/presigned-url:
+ *   get:
  *     tags: [Images]
- *     summary: 上傳圖片
- *     description: 上傳圖片到 S3 並保存圖片信息
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             properties:
- *               image:
- *                 type: string
- *                 format: binary
- *                 description: 圖片文件
- *               title:
- *                 type: string
- *                 description: 圖片標題
- *               description:
- *                 type: string
- *                 description: 圖片描述
+ *     summary: 獲取圖片上傳用的預簽名 URL
+ *     description: 生成用於直接上傳圖片到 S3 的預簽名 URL
+ *     parameters:
+ *       - name: fileType
+ *         in: query
+ *         required: true
+ *         description: 文件類型，必須是 .jpg、.jpeg、.png 或 .gif
+ *         schema:
+ *           type: string
+ *           enum: ['.jpg', '.jpeg', '.png', '.gif']
+ *           example: '.jpg'
  *     responses:
  *       200:
- *         description: 圖片上傳成功
+ *         description: 成功獲取預簽名 URL
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
+ *                 uploadUrl:
  *                   type: string
- *                   example: "Image uploaded successfully"
- *                 image:
- *                   $ref: '#/components/schemas/Image'
+ *                   description: 用於上傳的預簽名 URL
+ *                   example: "https://s3.amazonaws.com/bucket/..."
+ *                 imageUrl:
+ *                   type: string
+ *                   description: 上傳完成後的圖片訪問 URL
+ *                   example: "https://cdn.example.com/images/image.jpg"
+ *                 headers:
+ *                   type: object
+ *                   description: 上傳時需要的 headers
+ *                   properties:
+ *                     'Content-Type':
+ *                       type: string
+ *                       example: "image/jpeg"
+ *                     'x-amz-acl':
+ *                       type: string
+ *                       example: "public-read"
  *       400:
- *         description: 請求參數錯誤
+ *         description: 不支持的文件類型
  *         content:
  *           application/json:
  *             schema:
@@ -73,28 +78,44 @@ const router = new Router();
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "No image file provided"
+ *                   example: "不支持的文件類型"
+ *       500:
+ *         description: 生成預簽名 URL 失敗
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "生成預簽名 URL 失敗"
  */
-router.post("/images", upload.single("image"), async (ctx) => {
-  const { title, description } = ctx.request.body;
-
-  if (!ctx.file) {
+router.get("/images/presigned-url", async (ctx) => {
+  const { fileType } = ctx.query;
+  
+  // 驗證文件類型
+  if (!fileType.match(/\.(jpg|jpeg|png|gif)$/i)) {
     ctx.status = 400;
-    ctx.body = { error: "No image file provided" };
+    ctx.body = { error: "不支持的文件類型" };
     return;
   }
 
-  // 上傳圖片到 S3
-  const imageUrl = await uploadImageToS3(ctx.file);
+  try {
+    const urls = await generatePresignedUrl("images", fileType);
+    ctx.body = urls;
+  } catch (error) {
+    console.error('Error handling presigned URL request:', {
+      error: error.message,
+      fileType,
+      stack: error.stack
+    });
 
-  // 保存圖片信息到數據庫
-  const newImage = new Image({
-    title,
-    url: imageUrl,
-  });
-
-  await newImage.save();
-  ctx.body = { message: "Image uploaded successfully", image: newImage };
+    ctx.status = 500;
+    ctx.body = { 
+      error: "生成預簽名 URL 失敗",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    };
+  }
 });
 
 /**
