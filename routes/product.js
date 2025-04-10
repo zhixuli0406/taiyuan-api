@@ -476,23 +476,13 @@ router.post("/products", ensureAdminAuth, async (ctx) => {
 
   const categoryName = existingCategory.name;
 
-  const uploadedImages = [];
-  if (images && images.length > 0) {
-    for (const base64 of images) {
-      console.log('Uploading image starting...');
-      const imageUrl = await uploadBase64ImageToS3(base64, "products");
-      console.log(imageUrl);
-      uploadedImages.push(imageUrl); // 存儲圖片 URL
-    }
-  }
-
   const product = new Product({
     name,
     description,
     price,
     category,
     categoryName,
-    images: uploadedImages,
+    images: images || [], // 直接使用已上傳的圖片 URL
     ...rest,
   });
 
@@ -558,16 +548,6 @@ router.put("/products/:id", ensureAdminAuth, async (ctx) => {
     return;
   }
 
-  const uploadedImages = images;
-  if (newImages && newImages.length > 0) {
-    for (const base64 of newImages) {
-      console.log('Uploading image starting...');
-      const imageUrl = await uploadBase64ImageToS3(base64, "products");
-      console.log(imageUrl);
-      uploadedImages.push(imageUrl); // 存儲圖片 URL
-    }
-  }
-
   // 更新字段
   product.name = name ?? product.name;
   product.description = description ?? product.description;
@@ -575,7 +555,7 @@ router.put("/products/:id", ensureAdminAuth, async (ctx) => {
   product.category = category ?? product.category;
   product.categoryName =
     (await Category.findById(category))?.name ?? product.categoryName;
-  product.images = uploadedImages ?? product.images;
+  product.images = images ?? product.images; // 直接使用已上傳的圖片 URL
   product.variants = variants ?? product.variants;
   product.isCustomizable = isCustomizable ?? product.isCustomizable;
   product.customizableFields = customizableFields ?? product.customizableFields;
