@@ -150,9 +150,16 @@ const deleteImageFromS3 = async (key) => {
     console.log('開始刪除 S3 圖片...');
     console.log('刪除的圖片 key:', key);
     
+    // 如果 key 不包含文件夹路径，添加默认的 images 文件夹
+    let fullKey = key;
+    if (!key.includes('/')) {
+      fullKey = `images/${key}`;
+      console.log('添加默認文件夾路徑:', fullKey);
+    }
+    
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
-      Key: key
+      Key: fullKey
     };
     
     console.log('S3 刪除參數:', params);
