@@ -28,22 +28,76 @@ const uploadImageToS3 = async (file) => {
 };
 
 const uploadBase64ImageToS3 = async (base64Data, folder) => {
-  const buffer = Buffer.from(base64Data, "base64");
-  const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 8)}.jpg`;
-
-  const params = {
-    Bucket: process.env.S3_BUCKET_NAME, // S3 存儲桶名稱
-    Key: fileName,
-    Body: buffer,
-    ContentType: "image/jpeg",
-  };
-
   try {
+    console.log('開始處理圖片上傳...');
+    
+    // 檢查 base64 數據是否有效
+    if (!base64Data || typeof base64Data !== 'string') {
+      throw new Error('無效的 base64 數據');
+    }
+
+    // 移除 base64 前缀（如果有）
+    const base64String = base64Data.replace(/^data:image\/\w+;base64,/, '');
+    console.log('Base64 數據長度:', base64String.length);
+    
+    // 將 base64 轉換為 Buffer
+    const buffer = Buffer.from(base64String, 'base64');
+    console.log('Buffer 大小:', buffer.length);
+    
+    // 檢查 Buffer 是否有效
+    if (buffer.length === 0) {
+      throw new Error('無效的圖片數據');
+    }
+
+    // 生成文件名
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 8)}.jpg`;
+    console.log('生成的文件名:', fileName);
+
+    // 使用 sharp 處理圖片
+    const processedBuffer = await sharp(buffer)
+      .jpeg({ 
+        quality: 80,
+        chromaSubsampling: '4:4:4' // 保持較高的色彩質量
+      })
+      .toBuffer();
+    
+    console.log('處理後的圖片大小:', processedBuffer.length);
+
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: fileName,
+      Body: processedBuffer,
+      ContentType: 'image/jpeg',
+      ACL: 'public-read',
+      CacheControl: 'max-age=31536000',
+      Metadata: {
+        'Content-Type': 'image/jpeg'
+      }
+    };
+
+    console.log('開始上傳到 S3...');
     const result = await S3.upload(params).promise();
-    return process.env.CLOUD_FRONT_URL + fileName; // 返回圖片的 S3 URL
+    console.log('S3 上傳結果:', result);
+
+    const imageUrl = process.env.CLOUD_FRONT_URL + fileName;
+    console.log('生成的圖片 URL:', imageUrl);
+
+    // 驗證圖片是否可訪問
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`圖片驗證失敗: ${response.status}`);
+      }
+      console.log('圖片驗證成功');
+    } catch (error) {
+      console.error('圖片驗證失敗:', error);
+      throw new Error(`圖片驗證失敗: ${error.message}`);
+    }
+
+    return imageUrl;
   } catch (error) {
-    console.error("Error uploading image to S3:", error);
-    throw new Error(`Error uploading image to S3: ${error.message}`);
+    console.error("上傳圖片到 S3 失敗:", error);
+    throw new Error(`上傳圖片到 S3 失敗: ${error.message}`);
   }
 };
 
@@ -89,12 +143,27 @@ const deleteImageFromS3 = async (key) => {
 const generatePresignedUrl = async (folder, fileType) => {
   const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substr(2, 8)}${fileType}`;
   
+  // 确保文件类型是有效的图片格式
+  const validImageTypes = ['.jpg', '.jpeg', '.png', '.gif'];
+  if (!validImageTypes.includes(fileType.toLowerCase())) {
+    throw new Error('不支援的圖片格式');
+  }
+
+  // 根据文件类型设置正确的 Content-Type
+  const contentTypeMap = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif'
+  };
+  
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
     Key: fileName,
     Expires: 60 * 5, // URL 有效期 5 分鐘
-    ContentType: `image/${fileType.replace('.', '')}`,
+    ContentType: contentTypeMap[fileType.toLowerCase()],
     ACL: 'public-read',
+    CacheControl: 'max-age=31536000', // 設置緩存時間為一年
   };
 
   try {
@@ -122,6 +191,7 @@ const generatePresignedUrl = async (folder, fileType) => {
       headers: {
         'Content-Type': params.ContentType,
         'x-amz-acl': 'public-read',
+        'Cache-Control': 'max-age=31536000',
       }
     };
   } catch (error) {
