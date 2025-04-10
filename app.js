@@ -20,7 +20,7 @@ const storeSettingsRoutes = require("./routes/storeSettings");
 const analyticsRoutes = require("./routes/analytics");
 const initializeAdmin = require("./config/initAdmin");
 const initializeStoreSettings = require("./config/initStore");
-
+const imageRoutes = require("./routes/images");
 dotenv.config();
 connectDB().then(()=>{
   initializeAdmin();
@@ -88,6 +88,7 @@ app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.routes());
+app.use(imageRoutes.routes());
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server is running on port 3000');

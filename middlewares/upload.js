@@ -103,24 +103,45 @@ const uploadBase64ImageToS3 = async (base64Data, folder) => {
 
 const listImagesFromS3 = async () => {
   try {
+    console.log('開始獲取 S3 圖片列表...');
+    console.log('S3_BUCKET_NAME:', process.env.S3_BUCKET_NAME);
+    
     const params = {
       Bucket: process.env.S3_BUCKET_NAME
     };
     
+    console.log('S3 請求參數:', params);
     const data = await S3.listObjectsV2(params).promise();
+    console.log('S3 響應數據:', data);
+    
+    if (!data.Contents) {
+      console.log('S3 返回的數據中沒有 Contents 字段');
+      return [];
+    }
     
     // 篩選出圖片類型（如 .jpg, .png, .gif）
     const images = data.Contents.filter(item => 
-      item.Key.match(/\.(jpg|jpeg|png|gif)$/i)
+      item.Key && item.Key.match(/\.(jpg|jpeg|png|gif)$/i)
     );
 
-    return images.map(img => ({
+    console.log('篩選後的圖片數量:', images.length);
+    
+    const result = images.map(img => ({
       url: process.env.CLOUD_FRONT_URL + img.Key,
       key: img.Key
     }));
+
+    console.log('最終返回的圖片列表:', result);
+    return result;
     
   } catch (err) {
-    console.error('列出圖片時發生錯誤:', err);
+    console.error('列出圖片時發生錯誤:', {
+      error: err.message,
+      stack: err.stack,
+      code: err.code,
+      statusCode: err.statusCode
+    });
+    throw new Error('獲取圖片列表失敗: ' + err.message);
   }
 }
 
