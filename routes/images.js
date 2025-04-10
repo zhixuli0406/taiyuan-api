@@ -2,6 +2,9 @@
 const Router = require("koa-router");
 const { upload, uploadImageToS3, listImagesFromS3, deleteImageFromS3, generatePresignedUrl } = require("../middlewares/upload");
 const Image = require("../models/Image");
+const Product = require("../models/Product");
+const Carousel = require("../models/Carousel");
+const StoreSetting = require("../models/StoreSetting");
 
 const router = new Router();
 
@@ -164,7 +167,7 @@ router.get("/images", async (ctx) => {
  *   delete:
  *     tags: [Images]
  *     summary: 刪除圖片
- *     description: 從 S3 中刪除指定圖片
+ *     description: 從 S3 中刪除指定圖片，並檢查是否有其他資料庫正在使用此圖片
  *     parameters:
  *       - name: key
  *         in: path
@@ -183,6 +186,21 @@ router.get("/images", async (ctx) => {
  *                 message:
  *                   type: string
  *                   example: "圖片刪除成功"
+ *       400:
+ *         description: 圖片正在被使用
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "圖片正在被使用，無法刪除"
+ *                 usedBy:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["products", "carousels"]
  *       404:
  *         description: 圖片未找到
  *         content:
@@ -206,8 +224,37 @@ router.get("/images", async (ctx) => {
  */
 router.delete("/images/:key", async (ctx) => {
   const { key } = ctx.params;
+  const imageUrl = `${process.env.CLOUD_FRONT_URL}${key}`;
   
   try {
+    // 檢查圖片是否被產品使用
+    const productsUsingImage = await Product.find({ images: imageUrl });
+    
+    // 檢查圖片是否被輪播圖使用
+    const carouselsUsingImage = await Carousel.find({ imageUrl });
+    
+    // 檢查圖片是否被商店設置使用
+    const storeSettingsUsingImage = await StoreSetting.findOne({ 
+      'appearance.logo': imageUrl 
+    });
+    
+    // 收集所有使用此圖片的資料庫
+    const usedBy = [];
+    if (productsUsingImage.length > 0) usedBy.push('products');
+    if (carouselsUsingImage.length > 0) usedBy.push('carousels');
+    if (storeSettingsUsingImage) usedBy.push('storeSettings');
+    
+    // 如果圖片正在被使用，返回錯誤
+    if (usedBy.length > 0) {
+      ctx.status = 400;
+      ctx.body = {
+        error: "圖片正在被使用，無法刪除",
+        usedBy
+      };
+      return;
+    }
+    
+    // 如果圖片未被使用，執行刪除操作
     const success = await deleteImageFromS3(key);
     if (!success) {
       ctx.status = 404;
@@ -217,6 +264,7 @@ router.delete("/images/:key", async (ctx) => {
     
     ctx.body = { message: "圖片刪除成功" };
   } catch (error) {
+    console.error('刪除圖片時發生錯誤:', error);
     ctx.status = 500;
     ctx.body = { error: "刪除圖片失敗" };
   }
