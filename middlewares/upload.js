@@ -164,6 +164,12 @@ const generatePresignedUrl = async (folder, fileType) => {
     ContentType: contentTypeMap[fileType.toLowerCase()],
     ACL: 'public-read',
     CacheControl: 'max-age=31536000', // 設置緩存時間為一年
+    // 添加更多必要的參數
+    Conditions: [
+      ['content-length-range', 0, 10485760], // 限制文件大小為 10MB
+      { 'x-amz-acl': 'public-read' },
+      { 'Cache-Control': 'max-age=31536000' }
+    ]
   };
 
   try {
@@ -181,18 +187,19 @@ const generatePresignedUrl = async (folder, fileType) => {
       ContentType: params.ContentType
     });
 
-    // 使用 getSignedUrl 而不是 getSignedUrlPromise
+    // 使用 createPresignedPost 而不是 getSignedUrl
     const signedUrl = await new Promise((resolve, reject) => {
-      S3.getSignedUrl('putObject', params, (err, url) => {
+      S3.createPresignedPost(params, (err, data) => {
         if (err) reject(err);
-        else resolve(url);
+        else resolve(data);
       });
     });
     
     console.log('Successfully generated presigned URL');
     
     return {
-      uploadUrl: signedUrl,
+      uploadUrl: signedUrl.url,
+      fields: signedUrl.fields,
       imageUrl: process.env.CLOUD_FRONT_URL + fileName,
       headers: {
         'Content-Type': params.ContentType,
