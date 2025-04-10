@@ -2301,6 +2301,27 @@
                           }
                         }
                       }
+                    },
+                    "statistics": {
+                      "type": "object",
+                      "properties": {
+                        "totalOrders": {
+                          "type": "number",
+                          "description": "總訂單數"
+                        },
+                        "pendingOrders": {
+                          "type": "number",
+                          "description": "待處理訂單數"
+                        },
+                        "completedOrders": {
+                          "type": "number",
+                          "description": "已完成訂單數"
+                        },
+                        "totalRevenue": {
+                          "type": "number",
+                          "description": "總營收（僅計算已完成訂單）"
+                        }
+                      }
                     }
                   }
                 }

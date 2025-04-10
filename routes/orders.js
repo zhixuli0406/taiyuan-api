@@ -313,6 +313,21 @@
  *                         type: object
  *                       payment:
  *                         type: object
+ *                 statistics:
+ *                   type: object
+ *                   properties:
+ *                     totalOrders:
+ *                       type: number
+ *                       description: 總訂單數
+ *                     pendingOrders:
+ *                       type: number
+ *                       description: 待處理訂單數
+ *                     completedOrders:
+ *                       type: number
+ *                       description: 已完成訂單數
+ *                     totalRevenue:
+ *                       type: number
+ *                       description: 總營收（僅計算已完成訂單）
  *       403:
  *         description: 權限不足
  */
@@ -537,7 +552,7 @@ router.post("/orders/payment/callback", async (ctx) => {
 
   if (!order) {
     ctx.status = 404;
-    ctx.body = { error: "Order not found" };
+    ctx.body = { error: "訂單未找到" };
     return;
   }
 
@@ -573,7 +588,7 @@ router.post("/orders/logistics/callback", async (ctx) => {
 
   if (!order) {
     ctx.status = 404;
-    ctx.body = { error: "Order not found" };
+    ctx.body = { error: "訂單未找到" };
     return;
   }
 
@@ -602,7 +617,7 @@ router.get("/orders/my-orders", async (ctx) => {
 
   if (!orders.length) {
     ctx.status = 404;
-    ctx.body = { error: "No orders found for this user" };
+    ctx.body = { error: "未找到該用戶的訂單" };
     return;
   }
 
@@ -615,7 +630,26 @@ router.get("/orders", async (ctx) => {
     .sort({ createdAt: -1 })
     .populate("user", "email");
 
-  ctx.body = { orders };
+  // 计算统计信息
+  const totalOrders = orders.length;
+  const pendingOrders = orders.filter(order => order.status === "Pending").length;
+  const completedOrders = orders.filter(order => order.status === "Completed").length;
+  const totalRevenue = orders.reduce((sum, order) => {
+    if (order.status === "Completed") {
+      return sum + order.totalAmount;
+    }
+    return sum;
+  }, 0);
+
+  ctx.body = { 
+    orders,
+    statistics: {
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      totalRevenue
+    }
+  };
 });
 
 // 更新訂單狀態
@@ -636,7 +670,7 @@ router.put("/orders/:id", async (ctx) => {
 
   await order.save();
 
-  ctx.body = { message: "Order updated successfully", order };
+  ctx.body = { message: "訂單更新成功", order };
 });
 
 // 刪除訂單 (取消)
@@ -659,7 +693,7 @@ router.delete("/orders/:id", async (ctx) => {
 
   await order.deleteOne();
 
-  ctx.body = { message: "Order cancelled successfully" };
+  ctx.body = { message: "訂單取消成功" };
 });
 
 module.exports = router;
