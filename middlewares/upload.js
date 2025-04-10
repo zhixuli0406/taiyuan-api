@@ -181,7 +181,13 @@ const generatePresignedUrl = async (folder, fileType) => {
       ContentType: params.ContentType
     });
 
-    const signedUrl = await S3.getSignedUrlPromise('putObject', params);
+    // 使用 getSignedUrl 而不是 getSignedUrlPromise
+    const signedUrl = await new Promise((resolve, reject) => {
+      S3.getSignedUrl('putObject', params, (err, url) => {
+        if (err) reject(err);
+        else resolve(url);
+      });
+    });
     
     console.log('Successfully generated presigned URL');
     
