@@ -162,18 +162,7 @@ const generatePresignedUrl = async (folder, fileType) => {
     Key: fileName,
     Expires: 60 * 5, // URL 有效期 5 分鐘
     ContentType: contentTypeMap[fileType.toLowerCase()],
-    ACL: 'public-read',
-    CacheControl: 'max-age=31536000', // 設置緩存時間為一年
-    // 添加更多必要的參數
-    Conditions: [
-      ['content-length-range', 0, 10485760], // 限制文件大小為 10MB
-      { 'x-amz-acl': 'public-read' },
-      { 'Cache-Control': 'max-age=31536000' }
-    ],
-    // 添加認證相關參數
-    SignatureVersion: 'v4',
-    SigningMethod: 's3v4',
-    SigningRegion: process.env.AWS_REGION || 'us-east-1'
+    ACL: 'public-read'
   };
 
   try {
@@ -191,17 +180,11 @@ const generatePresignedUrl = async (folder, fileType) => {
     console.log('Generating presigned URL with params:', {
       Bucket: params.Bucket,
       Key: params.Key,
-      ContentType: params.ContentType,
-      Region: params.SigningRegion
+      ContentType: params.ContentType
     });
 
-    // 使用 getSignedUrl 而不是 createPresignedPost
-    const signedUrl = await new Promise((resolve, reject) => {
-      S3.getSignedUrl('putObject', params, (err, url) => {
-        if (err) reject(err);
-        else resolve(url);
-      });
-    });
+    // 使用 getSignedUrlPromise
+    const signedUrl = await S3.getSignedUrlPromise('putObject', params);
     
     console.log('Successfully generated presigned URL');
     
@@ -210,8 +193,7 @@ const generatePresignedUrl = async (folder, fileType) => {
       imageUrl: process.env.CLOUD_FRONT_URL + fileName,
       headers: {
         'Content-Type': params.ContentType,
-        'x-amz-acl': 'public-read',
-        'Cache-Control': 'max-age=31536000',
+        'x-amz-acl': 'public-read'
       }
     };
   } catch (error) {
@@ -221,8 +203,7 @@ const generatePresignedUrl = async (folder, fileType) => {
       params: {
         Bucket: params.Bucket,
         Key: params.Key,
-        ContentType: params.ContentType,
-        Region: params.SigningRegion
+        ContentType: params.ContentType
       }
     });
     throw error;
