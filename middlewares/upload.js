@@ -147,16 +147,54 @@ const listImagesFromS3 = async () => {
 
 const deleteImageFromS3 = async (key) => {
   try {
+    console.log('開始刪除 S3 圖片...');
+    console.log('刪除的圖片 key:', key);
+    
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
       Key: key
     };
     
+    console.log('S3 刪除參數:', params);
+    
+    // 先檢查文件是否存在
+    try {
+      await S3.headObject(params).promise();
+      console.log('文件存在，開始刪除...');
+    } catch (err) {
+      console.error('文件不存在或無法訪問:', {
+        error: err.message,
+        code: err.code,
+        statusCode: err.statusCode
+      });
+      return false;
+    }
+    
+    // 執行刪除操作
     await S3.deleteObject(params).promise();
-    return true;
+    console.log('文件刪除成功');
+    
+    // 驗證文件是否真的被刪除
+    try {
+      await S3.headObject(params).promise();
+      console.error('文件仍然存在，刪除可能失敗');
+      return false;
+    } catch (err) {
+      if (err.code === 'NotFound') {
+        console.log('文件確認已刪除');
+        return true;
+      }
+      console.error('驗證刪除時發生錯誤:', err);
+      return false;
+    }
     
   } catch (err) {
-    console.error('刪除圖片時發生錯誤:', err);
+    console.error('刪除圖片時發生錯誤:', {
+      error: err.message,
+      stack: err.stack,
+      code: err.code,
+      statusCode: err.statusCode
+    });
     return false;
   }
 }
