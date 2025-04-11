@@ -167,14 +167,18 @@ router.get("/images", async (ctx) => {
  *   delete:
  *     tags: [Images]
  *     summary: 刪除圖片
- *     description: 從 S3 中刪除指定圖片，並檢查是否有其他資料庫正在使用此圖片
+ *     description: |
+ *       從 S3 中刪除指定圖片。
+ *       在刪除之前會檢查該圖片是否被其他資料庫（如產品、輪播圖、商店設置等）使用。
+ *       如果圖片正在被使用，將返回錯誤信息並列出使用該圖片的資料庫。
  *     parameters:
  *       - name: key
  *         in: path
  *         required: true
- *         description: 圖片在 S3 中的 key
+ *         description: 圖片在 S3 中的 key，例如 'images/example.jpg'
  *         schema:
  *           type: string
+ *           example: "images/example.jpg"
  *     responses:
  *       200:
  *         description: 圖片刪除成功
@@ -185,6 +189,7 @@ router.get("/images", async (ctx) => {
  *               properties:
  *                 message:
  *                   type: string
+ *                   description: 成功消息
  *                   example: "圖片刪除成功"
  *       400:
  *         description: 圖片正在被使用
@@ -195,11 +200,14 @@ router.get("/images", async (ctx) => {
  *               properties:
  *                 error:
  *                   type: string
+ *                   description: 錯誤信息
  *                   example: "圖片正在被使用，無法刪除"
  *                 usedBy:
  *                   type: array
+ *                   description: 使用該圖片的資料庫列表
  *                   items:
  *                     type: string
+ *                     enum: [products, carousels, storeSettings]
  *                   example: ["products", "carousels"]
  *       404:
  *         description: 圖片未找到
@@ -210,6 +218,7 @@ router.get("/images", async (ctx) => {
  *               properties:
  *                 error:
  *                   type: string
+ *                   description: 錯誤信息
  *                   example: "圖片未找到"
  *       500:
  *         description: 伺服器錯誤
@@ -220,6 +229,7 @@ router.get("/images", async (ctx) => {
  *               properties:
  *                 error:
  *                   type: string
+ *                   description: 錯誤信息
  *                   example: "刪除圖片失敗"
  */
 router.delete("/images/:key", async (ctx) => {

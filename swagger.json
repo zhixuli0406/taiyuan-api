@@ -1908,15 +1908,16 @@
           "Images"
         ],
         "summary": "刪除圖片",
-        "description": "從 S3 中刪除指定圖片",
+        "description": "從 S3 中刪除指定圖片。\n在刪除之前會檢查該圖片是否被其他資料庫（如產品、輪播圖、商店設置等）使用。\n如果圖片正在被使用，將返回錯誤信息並列出使用該圖片的資料庫。\n",
         "parameters": [
           {
             "name": "key",
             "in": "path",
             "required": true,
-            "description": "圖片在 S3 中的 key",
+            "description": "圖片在 S3 中的 key，例如 'images/example.jpg'",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "example": "images/example.jpg"
             }
           }
         ],
@@ -1930,7 +1931,41 @@
                   "properties": {
                     "message": {
                       "type": "string",
+                      "description": "成功消息",
                       "example": "圖片刪除成功"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "圖片正在被使用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "錯誤信息",
+                      "example": "圖片正在被使用，無法刪除"
+                    },
+                    "usedBy": {
+                      "type": "array",
+                      "description": "使用該圖片的資料庫列表",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "products",
+                          "carousels",
+                          "storeSettings"
+                        ]
+                      },
+                      "example": [
+                        "products",
+                        "carousels"
+                      ]
                     }
                   }
                 }
@@ -1946,6 +1981,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
+                      "description": "錯誤信息",
                       "example": "圖片未找到"
                     }
                   }
@@ -1962,6 +1998,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
+                      "description": "錯誤信息",
                       "example": "刪除圖片失敗"
                     }
                   }
