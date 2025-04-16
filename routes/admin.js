@@ -205,8 +205,9 @@ router.post('/login', async (ctx) => {
     }
 
     const token = jwt.sign({ _id: admin._id, email: admin.email, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    ctx.body = { token, admin };
+    ctx.body = { token, admin: { _id: admin._id, email: admin.email, name: admin.name, role: admin.role } };
   } catch (err) {
+    console.error("Login error:", err);
     ctx.status = 401;
     ctx.body = { error: "無效的電子郵件或密碼" };
   }

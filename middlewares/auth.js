@@ -26,6 +26,7 @@ const ensureAdminAuth = async (ctx, next) => {
     ctx.state.admin = decoded; // 儲存到 ctx.state
     await next();
   } catch (error) {
+    console.error("Token verification error:", error);
     ctx.status = 401;
     ctx.body = { error: "Invalid token" };
   }

@@ -4,6 +4,8 @@ const cors = require("@koa/cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const { ensureAdminAuth} = require("./middlewares/auth");
+const serve = require("koa-static");
+const Router = require("koa-router");
 
 // 導入路由
 const productRoutes = require("./routes/product");
@@ -92,6 +94,18 @@ app.use(carouselRoutes.routes());
 app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
 app.use(analyticsRoutes.routes());
+
+// 設定 Swagger UI
+app.use(serve("node_modules/swagger-ui-dist"));
+
+// 提供 Swagger JSON
+const router = new Router();
+router.get("/swagger.json", async (ctx) => {
+  ctx.body = swaggerDocument;
+});
+
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server is running on port 3000');
