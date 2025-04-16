@@ -1,28 +1,27 @@
-const swaggerJsDoc = require('swagger-jsdoc');
-const fs = require('fs');
+const swaggerJsdoc = require("swagger-jsdoc");
+const fs = require("fs");
 
 // Swagger配置
-const swaggerOptions = {
-    swaggerDefinition: {
-        openapi: '3.0.0',
+const options = {
+    definition: {
+        openapi: "3.0.0",
         info: {
-            title: 'Taiyuan API',
-            version: '1.0.0',
-            description: 'API Description',
+            title: "Taiyuan API",
+            version: "1.0.0",
+            description: "Taiyuan 電子商務平台 API 文檔",
         },
         servers: [
             {
-                url: 'https://api.taiyuan.dudustudio.monster', // 您的 API 主机
+                url: "https://api.taiyuan.dudustudio.monster", // 您的 API 主機
             },
         ],
     },
-    apis: ['./routes/*.js'], // 指定包含 OpenAPI 注释的文件
+    apis: ["./routes/*.js"], // 指定包含 OpenAPI 註釋的文件
 };
 
-// 生成 Swagger 文档
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
+// 生成 Swagger 文檔
+const swaggerSpec = swaggerJsdoc(options);
 
-// 将生成的文档写入 swagger.json 文件
-fs.writeFileSync('./swagger.json', JSON.stringify(swaggerDocs, null, 2), 'utf8');
-
-console.log('swagger.json has been generated successfully!');
+// 將生成的文檔寫入 swagger.json 文件
+fs.writeFileSync("./swagger.json", JSON.stringify(swaggerSpec, null, 2));
+console.log("Swagger 文檔已生成");

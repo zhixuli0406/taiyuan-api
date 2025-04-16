@@ -4,7 +4,7 @@
  * @openapi
  * tags:
  *   name: Coupons
- *   description: 折价券管理的 API
+ *   description: 折價券管理的 API
  */
 
 /**
@@ -12,24 +12,30 @@
  * /coupons:
  *   post:
  *     tags: [Coupons]
- *     summary: 创建折价券
+ *     summary: 創建折價券
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - code
+ *               - discountType
+ *               - discountValue
  *             properties:
  *               code:
  *                 type: string
- *               type:
+ *               discountType:
  *                 type: string
- *                 enum: [FixedAmount, Percentage]
- *               value:
- *                 type: number
- *               maxDiscount:
+ *                 enum: [percentage, fixed]
+ *               discountValue:
  *                 type: number
  *               minPurchase:
+ *                 type: number
+ *               maxDiscount:
  *                 type: number
  *               startDate:
  *                 type: string
@@ -37,19 +43,13 @@
  *               endDate:
  *                 type: string
  *                 format: date-time
- *               applicableToProducts:
- *                 type: array
- *                 items:
- *                   type: string
- *               applicableToCategories:
- *                 type: array
- *                 items:
- *                   type: string
  *               usageLimit:
  *                 type: number
+ *               isActive:
+ *                 type: boolean
  *     responses:
- *       201:
- *         description: 折价券创建成功
+ *       200:
+ *         description: 折價券創建成功
  *         content:
  *           application/json:
  *             schema:
@@ -60,7 +60,7 @@
  *                 coupon:
  *                   $ref: '#/components/schemas/Coupon'
  *       400:
- *         description: 请求参数错误
+ *         description: 請求參數錯誤
  */
 
 /**
@@ -68,10 +68,10 @@
  * /coupons:
  *   get:
  *     tags: [Coupons]
- *     summary: 获取所有折价券
+ *     summary: 獲取所有折價券
  *     responses:
  *       200:
- *         description: 成功获取折价券列表
+ *         description: 成功獲取折價券列表
  *         content:
  *           application/json:
  *             schema:
@@ -85,47 +85,42 @@
 
 /**
  * @openapi
- * /coupons/validate:
+ * /coupons/verify:
  *   post:
  *     tags: [Coupons]
- *     summary: 验证及使用折价券
+ *     summary: 驗證及使用折價券
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - code
+ *               - amount
  *             properties:
  *               code:
  *                 type: string
- *               totalAmount:
+ *               amount:
  *                 type: number
- *               productIds:
- *                 type: array
- *                 items:
- *                   type: string
- *               categoryIds:
- *                 type: array
- *                 items:
- *                   type: string
  *     responses:
  *       200:
- *         description: 折价券验证成功
+ *         description: 折價券驗證成功
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
+ *                 isValid:
+ *                   type: boolean
  *                 discount:
  *                   type: number
- *                 finalAmount:
- *                   type: number
+ *                 coupon:
+ *                   $ref: '#/components/schemas/Coupon'
  *       400:
- *         description: 折价券无效或不适用
+ *         description: 折價券無效或不適用
  *       404:
- *         description: 折价券未找到
+ *         description: 折價券未找到
  */
 
 /**
@@ -133,19 +128,19 @@
  * /coupons/{id}:
  *   delete:
  *     tags: [Coupons]
- *     summary: 删除折价券
+ *     summary: 刪除折價券
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 折价券的 ID
+ *         description: 折價券的 ID
  *         schema:
  *           type: string
  *     responses:
- *       204:
- *         description: 折价券删除成功
+ *       200:
+ *         description: 折價券刪除成功
  *       404:
- *         description: 折价券未找到
+ *         description: 折價券未找到
  */
 
 /**
@@ -153,17 +148,17 @@
  * /coupons/{id}/disable:
  *   put:
  *     tags: [Coupons]
- *     summary: 禁用折价券
+ *     summary: 禁用折價券
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 折价券的 ID
+ *         description: 折價券的 ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: 折价券禁用成功
+ *         description: 折價券禁用成功
  *         content:
  *           application/json:
  *             schema:
@@ -174,7 +169,7 @@
  *                 coupon:
  *                   $ref: '#/components/schemas/Coupon'
  *       404:
- *         description: 折价券未找到
+ *         description: 折價券未找到
  */
 
 /**
@@ -184,39 +179,37 @@
  *     Coupon:
  *       type: object
  *       properties:
- *         id:
+ *         _id:
  *           type: string
  *         code:
  *           type: string
- *         type:
+ *         discountType:
  *           type: string
- *           enum: [FixedAmount, Percentage]
- *         value:
- *           type: number
- *         maxDiscount:
+ *           enum: [percentage, fixed]
+ *         discountValue:
  *           type: number
  *         minPurchase:
  *           type: number
- *         usageLimit:
+ *         maxDiscount:
  *           type: number
- *         usedCount:
- *           type: number
- *         applicableToProducts:
- *           type: array
- *           items:
- *             type: string
- *         applicableToCategories:
- *           type: array
- *           items:
- *             type: string
  *         startDate:
  *           type: string
  *           format: date-time
  *         endDate:
  *           type: string
  *           format: date-time
+ *         usageLimit:
+ *           type: number
+ *         usageCount:
+ *           type: number
  *         isActive:
  *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 const Router = require("koa-router");
@@ -238,29 +231,27 @@ const ensureAdminAuth = async (ctx, next) => {
 router.post("/coupons", ensureAdminAuth, async (ctx) => {
   const {
     code,
-    type,
-    value,
-    maxDiscount,
+    discountType,
+    discountValue,
     minPurchase,
+    maxDiscount,
     startDate,
     endDate,
-    applicableToProducts,
-    applicableToCategories,
     usageLimit,
+    isActive,
   } = ctx.request.body;
 
   try {
     const newCoupon = new Coupon({
       code,
-      type,
-      value,
-      maxDiscount,
+      discountType,
+      discountValue,
       minPurchase,
+      maxDiscount,
       startDate,
       endDate,
-      applicableToProducts,
-      applicableToCategories,
       usageLimit,
+      isActive,
     });
 
     await newCoupon.save();
@@ -277,9 +268,9 @@ router.get("/coupons", ensureAdminAuth, async (ctx) => {
   ctx.body = { coupons };
 });
 
-// 驗證及使用折價券 (POST /coupons/validate)
-router.post("/coupons/validate", async (ctx) => {
-  const { code, totalAmount, productIds, categoryIds } = ctx.request.body;
+// 驗證及使用折價券 (POST /coupons/verify)
+router.post("/coupons/verify", async (ctx) => {
+  const { code, amount } = ctx.request.body;
 
   const coupon = await Coupon.findOne({ code });
 
@@ -298,56 +289,38 @@ router.post("/coupons/validate", async (ctx) => {
   }
 
   // 檢查最小消費金額限制
-  if (totalAmount < coupon.minPurchase) {
+  if (amount < coupon.minPurchase) {
     ctx.status = 400;
     ctx.body = { error: `Minimum purchase amount is ${coupon.minPurchase}` };
     return;
   }
 
   // 檢查使用次數限制
-  if (coupon.usedCount >= coupon.usageLimit) {
+  if (coupon.usageCount >= coupon.usageLimit) {
     ctx.status = 400;
     ctx.body = { error: "Coupon usage limit reached" };
     return;
   }
 
-  // 檢查適用產品或分類
-  if (
-    coupon.applicableToProducts.length > 0 &&
-    !productIds.some((id) => coupon.applicableToProducts.includes(id))
-  ) {
-    ctx.status = 400;
-    ctx.body = { error: "Coupon is not applicable to these products" };
-    return;
-  }
-  if (
-    coupon.applicableToCategories.length > 0 &&
-    !categoryIds.some((id) => coupon.applicableToCategories.includes(id))
-  ) {
-    ctx.status = 400;
-    ctx.body = { error: "Coupon is not applicable to these categories" };
-    return;
-  }
-
   // 計算折扣
   let discount = 0;
-  if (coupon.type === "FixedAmount") {
-    discount = coupon.value;
-  } else if (coupon.type === "Percentage") {
-    discount = (totalAmount * coupon.value) / 100;
+  if (coupon.discountType === "fixed") {
+    discount = coupon.discountValue;
+  } else if (coupon.discountType === "percentage") {
+    discount = (amount * coupon.discountValue) / 100;
     if (coupon.maxDiscount) {
       discount = Math.min(discount, coupon.maxDiscount);
     }
   }
 
   // 更新使用次數
-  coupon.usedCount += 1;
+  coupon.usageCount += 1;
   await coupon.save();
 
   ctx.body = {
     message: "Coupon validated successfully",
     discount,
-    finalAmount: totalAmount - discount,
+    coupon,
   };
 });
 

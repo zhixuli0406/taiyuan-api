@@ -13,12 +13,17 @@
  *   post:
  *     tags: [Carousels]
  *     summary: 創建新的輪播圖
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - title
+ *               - image
  *             properties:
  *               title:
  *                 type: string
@@ -34,10 +39,9 @@
  *                 description: 顯示順序
  *               image:
  *                 type: string
- *                 format: base64
  *                 description: Base64 格式的圖片
  *     responses:
- *       201:
+ *       200:
  *         description: 輪播圖創建成功
  *         content:
  *           application/json:
@@ -54,7 +58,7 @@
 
 /**
  * @openapi
- * /carousel:
+ * /carousels:
  *   get:
  *     tags: [Carousels]
  *     summary: 獲取所有輪播圖列表
@@ -78,6 +82,8 @@
  *   put:
  *     tags: [Carousels]
  *     summary: 更新輪播圖
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -107,10 +113,6 @@
  *               isActive:
  *                 type: boolean
  *                 description: 是否啟用
- *               image:
- *                 type: string
- *                 format: base64
- *                 description: Base64 格式的新圖片（可選）
  *     responses:
  *       200:
  *         description: 輪播圖更新成功
@@ -220,27 +222,26 @@
  *     Carousel:
  *       type: object
  *       properties:
- *         id:
+ *         _id:
  *           type: string
- *           description: 輪播圖 ID
  *         title:
  *           type: string
- *           description: 輪播圖標題
  *         description:
  *           type: string
- *           description: 輪播圖描述
- *         imageUrl:
- *           type: string
- *           description: 圖片 URL
  *         link:
  *           type: string
- *           description: 輪播圖連結
+ *         imageUrl:
+ *           type: string
  *         order:
  *           type: number
- *           description: 顯示順序
  *         isActive:
  *           type: boolean
- *           description: 是否啟用
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 const Router = require("koa-router");

@@ -1,6 +1,10 @@
 const Koa = require("koa");
-const bodyParser = require("koa-bodyparser");
+const Router = require("koa-router");
 const cors = require("@koa/cors");
+const bodyParser = require("koa-bodyparser");
+const mongoose = require("mongoose");
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./swagger.json");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const { ensureAdminAuth} = require("./middlewares/auth");
@@ -21,6 +25,7 @@ const analyticsRoutes = require("./routes/analytics");
 const initializeAdmin = require("./config/initAdmin");
 const initializeStoreSettings = require("./config/initStore");
 const imageRoutes = require("./routes/images");
+const transportRoutes = require("./routes/transport");
 dotenv.config();
 connectDB().then(()=>{
   initializeAdmin();
@@ -28,69 +33,79 @@ connectDB().then(()=>{
 });
 
 const app = new Koa();
+const router = new Router();
 
+// 連接 MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("MongoDB 連接成功"))
+  .catch((err) => console.error("MongoDB 連接失敗:", err));
+
+// 配置 CORS
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:5174',
-  'https://taiyuan.dudustudio.monster',
+  "http://localhost:3000",
+  "https://taiyuan.dudustudio.monster",
+  "https://www.taiyuan.dudustudio.monster",
   // 添加其他允許的域名
 ];
 
 // 將 CORS 中間件放在最前面
-app.use(cors({
-  origin: (ctx) => {
-    const requestOrigin = ctx.get('Origin');
-    if (allowedOrigins.includes(requestOrigin)) {
-      return requestOrigin;
-    }
-    return false; // 不允許其他來源
-  },
-  credentials: true,
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'x-amz-acl'],
-  exposeHeaders: ['WWW-Authenticate', 'Server-Authorization'],
-  maxAge: 5 // Preflight 請求的緩存時間
-}));
+app.use(
+  cors({
+    origin: (ctx) => {
+      const origin = ctx.get("Origin");
+      if (allowedOrigins.includes(origin)) {
+        return origin;
+      }
+      return false; // 不允許其他來源
+    },
+    credentials: true,
+    maxAge: 5, // Preflight 請求的緩存時間
+  })
+);
 
 // 錯誤處理中間件
 app.use(async (ctx, next) => {
-  const start = Date.now();
-  console.log(`${ctx.method} ${ctx.url} - Request started`);
-  
   try {
     await next();
-    
-    const ms = Date.now() - start;
-    console.log(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms`);
   } catch (err) {
-    const ms = Date.now() - start;
-    console.error(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms - Error:`, err);
-    throw err;
+    ctx.status = err.status || 500;
+    ctx.body = {
+      error: err.message || "伺服器錯誤",
+    };
   }
 });
 
-app.use(bodyParser({
-  enableTypes: ['json', 'form', 'text'], // 支援的請求類型
-  jsonLimit: '100mb', // JSON 格式的限制
-  formLimit: '100mb', // 表單數據大小限制
-  textLimit: '100mb', // 純文本數據大小限制
-}));
+// 配置 bodyParser
+app.use(
+  bodyParser({
+    enableTypes: ["json", "form", "text"], // 支援的請求類型
+    jsonLimit: "100mb", // JSON 格式的限制
+    formLimit: "100mb", // 表單數據大小限制
+    textLimit: "100mb", // 純文本數據大小限制
+  })
+);
 
 // 使用路由
-app.use(productRoutes.routes());
-app.use(authRoutes.routes());
-app.use(cartRoutes.routes());
-app.use(categoryRoutes.routes());
-app.use(customerRoutes.routes());
-app.use(couponRoutes.routes());
-app.use(adminRoutes.routes());
-app.use(carouselRoutes.routes());
-app.use(inventoryRoutes.routes());
-app.use(orderRoutes.routes());
-app.use(storeSettingsRoutes.routes());
-app.use(analyticsRoutes.routes());
-app.use(imageRoutes.routes());
+router.use("/api", adminRoutes.routes());
+router.use("/api", productRoutes.routes());
+router.use("/api", transportRoutes.routes());
+router.use("/api", storeSettingsRoutes.routes());
+router.use("/api", imageRoutes.routes());
 
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server is running on port 3000');
+app.use(router.routes());
+app.use(router.allowedMethods());
+
+// 配置 Swagger UI
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCss: ".swagger-ui .topbar { display: none }",
+  })
+);
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`伺服器運行在端口 ${PORT}`);
 });

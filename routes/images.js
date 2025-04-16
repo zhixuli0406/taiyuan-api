@@ -11,8 +11,8 @@ const router = new Router();
 /**
  * @openapi
  * tags:
- *   - name: Images
- *     description: 圖片管理 API
+ *   name: Images
+ *   description: 圖片管理 API
  */
 
 /**
@@ -44,8 +44,6 @@ const router = new Router();
  *         description: 文件類型，必須是 .jpg、.jpeg、.png 或 .gif
  *         schema:
  *           type: string
- *           enum: ['.jpg', '.jpeg', '.png', '.gif']
- *           example: '.jpg'
  *     responses:
  *       200:
  *         description: 成功獲取預簽名 URL
@@ -57,21 +55,12 @@ const router = new Router();
  *                 uploadUrl:
  *                   type: string
  *                   description: 用於上傳的預簽名 URL
- *                   example: "https://s3.amazonaws.com/bucket/..."
  *                 imageUrl:
  *                   type: string
  *                   description: 上傳完成後的圖片訪問 URL
- *                   example: "https://cdn.example.com/images/image.jpg"
  *                 headers:
  *                   type: object
  *                   description: 上傳時需要的 headers
- *                   properties:
- *                     'Content-Type':
- *                       type: string
- *                       example: "image/jpeg"
- *                     'x-amz-acl':
- *                       type: string
- *                       example: "public-read"
  *       400:
  *         description: 不支持的文件類型
  *         content:
@@ -84,14 +73,6 @@ const router = new Router();
  *                   example: "不支持的文件類型"
  *       500:
  *         description: 生成預簽名 URL 失敗
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "生成預簽名 URL 失敗"
  */
 router.get("/images/presigned-url", async (ctx) => {
   const { fileType } = ctx.query;
@@ -127,7 +108,7 @@ router.get("/images/presigned-url", async (ctx) => {
  *   get:
  *     tags: [Images]
  *     summary: 獲取圖片列表
- *     description: 從 S3 獲取所有圖片並返回 CloudFront URL
+ *     description: 從 S3 獲取所有圖片並返回 CloudFront URL，無需驗證狀態
  *     responses:
  *       200:
  *         description: 成功獲取圖片列表
@@ -138,8 +119,18 @@ router.get("/images/presigned-url", async (ctx) => {
  *               properties:
  *                 images:
  *                   type: array
+ *                   description: 圖片列表
  *                   items:
- *                     $ref: '#/components/schemas/Image'
+ *                     type: object
+ *                     properties:
+ *                       url:
+ *                         type: string
+ *                         description: 圖片的 CloudFront URL
+ *                         example: "https://cdn.example.com/images/example.jpg"
+ *                       key:
+ *                         type: string
+ *                         description: 圖片在 S3 中的 key
+ *                         example: "images/example.jpg"
  *       500:
  *         description: 伺服器錯誤
  *         content:
@@ -149,6 +140,7 @@ router.get("/images/presigned-url", async (ctx) => {
  *               properties:
  *                 error:
  *                   type: string
+ *                   description: 錯誤信息
  *                   example: "獲取圖片列表失敗"
  */
 router.get("/images", async (ctx) => {
@@ -156,6 +148,7 @@ router.get("/images", async (ctx) => {
     const images = await listImagesFromS3();
     ctx.body = { images };
   } catch (error) {
+    console.error('獲取圖片列表時發生錯誤:', error);
     ctx.status = 500;
     ctx.body = { error: "獲取圖片列表失敗" };
   }

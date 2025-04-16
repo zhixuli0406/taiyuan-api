@@ -4,7 +4,38 @@
  * @openapi
  * tags:
  *   name: Products
- *   description: 产品管理的 API
+ *   description: 產品管理 API
+ */
+
+/**
+ * @openapi
+ * /products/presigned-url:
+ *   get:
+ *     tags: [Products]
+ *     summary: 獲取產品圖片上傳用的預簽名 URL
+ *     parameters:
+ *       - name: fileType
+ *         in: query
+ *         required: true
+ *         description: 文件類型 (.jpg, .png, .gif)
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取預簽名 URL
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 uploadUrl:
+ *                   type: string
+ *                 imageUrl:
+ *                   type: string
+ *       400:
+ *         description: 不支持的文件類型
+ *       500:
+ *         description: 生成預簽名 URL 失敗
  */
 
 /**
@@ -12,54 +43,62 @@
  * /products:
  *   post:
  *     tags: [Products]
- *     summary: 创建产品
+ *     summary: 創建產品
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - name
+ *               - price
+ *               - category
  *             properties:
  *               name:
  *                 type: string
+ *                 description: 商品名稱
  *               description:
  *                 type: string
+ *                 description: 商品描述
  *               price:
  *                 type: number
+ *                 description: 基本價格
  *               category:
  *                 type: string
+ *                 description: 分類ID
  *               images:
  *                 type: array
  *                 items:
  *                   type: string
+ *                 description: 圖片URL列表
  *               variants:
  *                 type: array
  *                 items:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     price:
- *                       type: number
- *                     quantity:
- *                       type: number
+ *                   $ref: '#/components/schemas/Variant'
  *               isCustomizable:
  *                 type: boolean
+ *                 description: 是否支持客製化
  *               customizableFields:
  *                 type: array
  *                 items:
  *                   type: string
  *               stock:
  *                 type: number
+ *                 description: 總庫存
  *               transport:
  *                 type: array
  *                 items:
  *                   type: string
+ *                 description: 支持的運輸方式ID列表
  *               isFeatured:
  *                 type: boolean
+ *                 description: 是否為熱門商品
  *     responses:
- *       201:
- *         description: 产品创建成功
+ *       200:
+ *         description: 產品創建成功
  *         content:
  *           application/json:
  *             schema:
@@ -68,47 +107,9 @@
  *                 message:
  *                   type: string
  *                 product:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     price:
- *                       type: number
- *                     category:
- *                       type: string
- *                     images:
- *                       type: array
- *                       items:
- *                         type: string
- *                     variants:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           price:
- *                             type: number
- *                           quantity:
- *                             type: number
- *                     isCustomizable:
- *                       type: boolean
- *                     customizableFields:
- *                       type: array
- *                       items:
- *                         type: string
- *                     stock:
- *                       type: number
- *                     transport:
- *                       type: array
- *                       items:
- *                         type: string
- *                     isFeatured:
- *                       type: boolean
+ *                   $ref: '#/components/schemas/Product'
  *       404:
- *         description: 分类未找到
+ *         description: 分類未找到
  */
 
 /**
@@ -116,35 +117,33 @@
  * /products:
  *   get:
  *     tags: [Products]
- *     summary: 获取产品列表
+ *     summary: 獲取產品列表
  *     parameters:
  *       - name: page
  *         in: query
- *         required: false
- *         description: 页码
+ *         description: 頁碼
  *         schema:
  *           type: integer
+ *           default: 1
  *       - name: limit
  *         in: query
- *         required: false
- *         description: 每页产品数量
+ *         description: 每頁產品數量
  *         schema:
  *           type: integer
+ *           default: 10
  *       - name: category
  *         in: query
- *         required: false
- *         description: 分类 ID
+ *         description: 分類ID
  *         schema:
  *           type: string
  *       - name: search
  *         in: query
- *         required: false
- *         description: 产品名称搜索
+ *         description: 產品名稱搜索
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: 成功获取产品列表
+ *         description: 成功獲取產品列表
  *         content:
  *           application/json:
  *             schema:
@@ -153,49 +152,9 @@
  *                 products:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       name:
- *                         type: string
- *                       description:
- *                         type: string
- *                       price:
- *                         type: number
- *                       category:
- *                         type: string
- *                       images:
- *                         type: array
- *                         items:
- *                           type: string
- *                       variants:
- *                         type: array
- *                         items:
- *                           type: object
- *                           properties:
- *                             name:
- *                               type: string
- *                             price:
- *                               type: number
- *                             quantity:
- *                               type: number
- *                       isCustomizable:
- *                         type: boolean
- *                       customizableFields:
- *                         type: array
- *                         items:
- *                           type: string
- *                       stock:
- *                         type: number
- *                       transport:
- *                         type: array
- *                         items:
- *                           type: string
- *                       isFeatured:
- *                         type: boolean
+ *                     $ref: '#/components/schemas/Product'
  *                 total:
  *                   type: integer
- *       404:
- *         description: 未找到产品
  */
 
 /**
@@ -203,64 +162,25 @@
  * /products/{id}:
  *   get:
  *     tags: [Products]
- *     summary: 获取单一产品
+ *     summary: 獲取單個產品
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 产品的 ID
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: 成功获取产品
+ *         description: 成功獲取產品
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 product:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     price:
- *                       type: number
- *                     category:
- *                       type: string
- *                     images:
- *                       type: array
- *                       items:
- *                         type: string
- *                     variants:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           price:
- *                             type: number
- *                           quantity:
- *                             type: number
- *                     isCustomizable:
- *                       type: boolean
- *                     customizableFields:
- *                       type: array
- *                       items:
- *                         type: string
- *                     stock:
- *                       type: number
- *                     transport:
- *                       type: array
- *                       items:
- *                         type: string
- *                     isFeatured:
- *                       type: boolean
+ *                   $ref: '#/components/schemas/Product'
  *       404:
- *         description: 产品未找到
+ *         description: 產品未找到
  */
 
 /**
@@ -268,12 +188,13 @@
  * /products/{id}:
  *   put:
  *     tags: [Products]
- *     summary: 更新产品
+ *     summary: 更新產品
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 产品的 ID
  *         schema:
  *           type: string
  *     requestBody:
@@ -302,14 +223,7 @@
  *               variants:
  *                 type: array
  *                 items:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     price:
- *                       type: number
- *                     quantity:
- *                       type: number
+ *                   $ref: '#/components/schemas/Variant'
  *               isCustomizable:
  *                 type: boolean
  *               customizableFields:
@@ -326,7 +240,7 @@
  *                 type: boolean
  *     responses:
  *       200:
- *         description: 产品更新成功
+ *         description: 產品更新成功
  *         content:
  *           application/json:
  *             schema:
@@ -335,47 +249,9 @@
  *                 message:
  *                   type: string
  *                 product:
- *                   type: object
- *                   properties:
- *                     name:
- *                       type: string
- *                     description:
- *                       type: string
- *                     price:
- *                       type: number
- *                     category:
- *                       type: string
- *                     images:
- *                       type: array
- *                       items:
- *                         type: string
- *                     variants:
- *                       type: array
- *                       items:
- *                         type: object
- *                         properties:
- *                           name:
- *                             type: string
- *                           price:
- *                             type: number
- *                           quantity:
- *                             type: number
- *                     isCustomizable:
- *                       type: boolean
- *                     customizableFields:
- *                       type: array
- *                       items:
- *                         type: string
- *                     stock:
- *                       type: number
- *                     transport:
- *                       type: array
- *                       items:
- *                         type: string
- *                     isFeatured:
- *                       type: boolean
+ *                   $ref: '#/components/schemas/Product'
  *       404:
- *         description: 产品未找到
+ *         description: 產品未找到
  */
 
 /**
@@ -383,46 +259,194 @@
  * /products/{id}:
  *   delete:
  *     tags: [Products]
- *     summary: 删除产品
+ *     summary: 刪除產品
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
  *         required: true
- *         description: 产品的 ID
- *         schema:
- *           type: string
- *     responses:
- *       204:
- *         description: 产品删除成功
- *       404:
- *         description: 产品未找到
- */
-
-/**
- * @openapi
- * /products/presigned-url:
- *   get:
- *     tags: [Products]
- *     summary: 獲取產品圖片上傳用的預簽名 URL
- *     parameters:
- *       - name: fileType
- *         in: query
- *         required: true
- *         description: 文件類型 (.jpg, .png, .gif)
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: 成功獲取預簽名 URL
+ *         description: 產品刪除成功
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 uploadUrl:
+ *                 message:
  *                   type: string
- *                 imageUrl:
+ *       404:
+ *         description: 產品未找到
+ */
+
+/**
+ * @openapi
+ * /products/{id}/transport:
+ *   post:
+ *     tags: [Products]
+ *     summary: 添加運輸方式到產品
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - transportId
+ *             properties:
+ *               transportId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 運輸方式添加成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
  *                   type: string
+ *       404:
+ *         description: 產品或運輸方式未找到
+ */
+
+/**
+ * @openapi
+ * /products/{id}/transport/{transportId}:
+ *   delete:
+ *     tags: [Products]
+ *     summary: 從產品中移除運輸方式
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - name: transportId
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 運輸方式移除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: 產品或運輸方式未找到
+ */
+
+/**
+ * @openapi
+ * /products/{id}/transport:
+ *   get:
+ *     tags: [Products]
+ *     summary: 獲取產品的所有運輸方式
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 成功獲取運輸方式列表
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 transport:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Transport'
+ *       404:
+ *         description: 產品未找到
+ */
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         price:
+ *           type: number
+ *         category:
+ *           type: string
+ *         categoryName:
+ *           type: string
+ *         images:
+ *           type: array
+ *           items:
+ *             type: string
+ *         variants:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Variant'
+ *         isCustomizable:
+ *           type: boolean
+ *         customizableFields:
+ *           type: array
+ *           items:
+ *             type: string
+ *         stock:
+ *           type: number
+ *         transport:
+ *           type: array
+ *           items:
+ *             type: string
+ *         isFeatured:
+ *           type: boolean
+ *         isActive:
+ *           type: boolean
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     Variant:
+ *       type: object
+ *       required:
+ *         - name
+ *         - price
+ *         - quantity
+ *       properties:
+ *         name:
+ *           type: string
+ *           description: 屬性名稱（例如顏色、尺碼）
+ *         price:
+ *           type: number
+ *           description: 專屬價格
+ *         quantity:
+ *           type: number
+ *           description: 專屬庫存
  */
 
 const Router = require("koa-router");
@@ -430,6 +454,7 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const { uploadBase64ImageToS3, generatePresignedUrl } = require("../middlewares/upload");
 const { ensureAdminAuth } = require("../middlewares/auth");
+const Transport = require("../models/Transport");
 
 const router = new Router();
 
@@ -580,6 +605,71 @@ router.delete("/products/:id", ensureAdminAuth, async (ctx) => {
 
   await product.deleteOne();
   ctx.body = { message: "Product deleted successfully" };
+});
+
+// 添加運輸方式到產品
+router.post("/products/:id/transport", ensureAdminAuth, async (ctx) => {
+  const { id } = ctx.params;
+  const { transportId } = ctx.request.body;
+
+  const product = await Product.findById(id);
+  if (!product) {
+    ctx.status = 404;
+    ctx.body = { error: "Product not found" };
+    return;
+  }
+
+  const transport = await Transport.findById(transportId);
+  if (!transport) {
+    ctx.status = 404;
+    ctx.body = { error: "Transport method not found" };
+    return;
+  }
+
+  if (!product.transport.includes(transportId)) {
+    product.transport.push(transportId);
+    await product.save();
+  }
+
+  ctx.body = { message: "Transport method added to product successfully" };
+});
+
+// 從產品中移除運輸方式
+router.delete("/products/:id/transport/:transportId", ensureAdminAuth, async (ctx) => {
+  const { id, transportId } = ctx.params;
+
+  const product = await Product.findById(id);
+  if (!product) {
+    ctx.status = 404;
+    ctx.body = { error: "Product not found" };
+    return;
+  }
+
+  const transportIndex = product.transport.indexOf(transportId);
+  if (transportIndex === -1) {
+    ctx.status = 404;
+    ctx.body = { error: "Transport method not found in product" };
+    return;
+  }
+
+  product.transport.splice(transportIndex, 1);
+  await product.save();
+
+  ctx.body = { message: "Transport method removed from product successfully" };
+});
+
+// 獲取產品的所有運輸方式
+router.get("/products/:id/transport", async (ctx) => {
+  const { id } = ctx.params;
+
+  const product = await Product.findById(id).populate("transport");
+  if (!product) {
+    ctx.status = 404;
+    ctx.body = { error: "Product not found" };
+    return;
+  }
+
+  ctx.body = { transport: product.transport };
 });
 
 module.exports = router;

@@ -19,6 +19,9 @@
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
  *             properties:
  *               email:
  *                 type: string
@@ -32,10 +35,10 @@
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
  *                 token:
  *                   type: string
+ *                 admin:
+ *                   $ref: '#/components/schemas/Admin'
  *       401:
  *         description: 無效的電子郵件或密碼
  */
@@ -46,22 +49,29 @@
  *   post:
  *     tags: [Admin]
  *     summary: 創建新管理員
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *               - role
  *             properties:
- *               username:
- *                 type: string
  *               email:
  *                 type: string
  *               password:
  *                 type: string
+ *               name:
+ *                 type: string
  *               role:
  *                 type: string
- *                 enum: [SuperAdmin, Admin]
+ *                 enum: [super_admin, admin]
  *     responses:
  *       201:
  *         description: 管理員創建成功
@@ -84,6 +94,8 @@
  *   get:
  *     tags: [Admin]
  *     summary: 獲取管理員列表
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: 成功獲取管理員列表
@@ -104,6 +116,8 @@
  *   put:
  *     tags: [Admin]
  *     summary: 更新管理員資料
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -118,13 +132,13 @@
  *           schema:
  *             type: object
  *             properties:
- *               username:
- *                 type: string
  *               email:
+ *                 type: string
+ *               name:
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [SuperAdmin, Admin]
+ *                 enum: [super_admin, admin]
  *     responses:
  *       200:
  *         description: 管理員更新成功
@@ -148,19 +162,26 @@
  *     Admin:
  *       type: object
  *       properties:
- *         id:
- *           type: string
- *         username:
+ *         _id:
  *           type: string
  *         email:
  *           type: string
+ *         name:
+ *           type: string
  *         role:
  *           type: string
- *           enum: [SuperAdmin, Admin]
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
  */
 
 const Router = require("koa-router");
 const Admin = require("../models/Admin");
+const { ensureAdminAuth } = require("../middlewares/auth");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const router = new Router();
@@ -172,17 +193,18 @@ router.post("/admin/login", async (ctx) => {
   const admin = await Admin.findOne({ email });
   if (!admin) {
     ctx.status = 401;
-    ctx.body = { error: "Invalid email or password" };
+    ctx.body = { error: "無效的電子郵件或密碼" };
     return;
   }
 
   // 驗證密碼
-  const isPasswordMatch = await admin.matchPassword(password);
-  if (!isPasswordMatch) {
+  const isValidPassword = await bcrypt.compare(password, admin.password);
+  if (!isValidPassword) {
     ctx.status = 401;
-    ctx.body = { error: "Invalid email or password" };
+    ctx.body = { error: "無效的電子郵件或密碼" };
     return;
   }
+
   // 簽發 JWT
   const token = jwt.sign(
     { id: admin._id, role: admin.role },
@@ -190,7 +212,15 @@ router.post("/admin/login", async (ctx) => {
     { algorithm: "HS256", expiresIn: "1d" } // Token 有效期為 1 天
   );
 
-  ctx.body = { message: "Login successful", token };
+  ctx.body = {
+    token,
+    admin: {
+      _id: admin._id,
+      email: admin.email,
+      name: admin.name,
+      role: admin.role,
+    },
+  };
 });
 
 // 創建新管理員 (POST /admin)

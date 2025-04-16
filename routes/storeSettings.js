@@ -7,8 +7,8 @@ const router = new Router();
 /**
  * @openapi
  * tags:
- *   - name: Store Settings
- *     description: 商店設置管理 API
+ *   name: StoreSetting
+ *   description: 商店設置管理 API
  */
 
 /**
@@ -18,66 +18,58 @@ const router = new Router();
  *     StoreSetting:
  *       type: object
  *       properties:
- *         name:
+ *         storeName:
  *           type: string
  *           description: 商店名稱
- *           default: "My Store"
  *         contact:
  *           type: object
  *           properties:
  *             phone:
  *               type: string
  *               description: 聯繫電話
- *               default: ""
  *             email:
  *               type: string
  *               description: 聯繫郵箱
- *               default: ""
  *         address:
  *           type: object
  *           properties:
  *             country:
  *               type: string
  *               description: 國家
- *               default: ""
  *             city:
  *               type: string
  *               description: 城市
- *               default: ""
- *             addressLine:
+ *             street:
  *               type: string
  *               description: 詳細地址
- *               default: ""
  *         businessHours:
- *           type: string
- *           description: 營業時間
- *           default: "9:00 AM - 9:00 PM"
- *         appearance:
  *           type: object
  *           properties:
- *             logo:
+ *             openTime:
+ *               type: string
+ *             closeTime:
+ *               type: string
+ *         branding:
+ *           type: object
+ *           properties:
+ *             logoUrl:
  *               type: string
  *               description: 商店 Logo URL
- *               default: ""
- *             themeColor:
+ *             primaryColor:
  *               type: string
  *               description: 主色調
- *               default: "#ffffff"
- *         socialLinks:
+ *         socialMedia:
  *           type: object
  *           properties:
  *             facebook:
  *               type: string
  *               description: Facebook 連結
- *               default: ""
  *             twitter:
  *               type: string
  *               description: Twitter 連結
- *               default: ""
  *             instagram:
  *               type: string
  *               description: Instagram 連結
- *               default: ""
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -92,8 +84,7 @@ const router = new Router();
  * @openapi
  * /store-settings:
  *   get:
- *     tags:
- *       - Store Settings
+ *     tags: [StoreSetting]
  *     summary: 讀取商店設置
  *     description: 獲取商店的所有設置信息
  *     responses:
@@ -102,10 +93,7 @@ const router = new Router();
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 settings:
- *                   $ref: '#/components/schemas/StoreSetting'
+ *               $ref: '#/components/schemas/StoreSetting'
  *       404:
  *         description: 商店設置未找到
  *         content:
@@ -118,27 +106,19 @@ const router = new Router();
  *                   example: "商店設置未找到"
  *       500:
  *         description: 伺服器錯誤
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
  */
 router.get("/store-settings", async (ctx) => {
   try {
-    // 查詢第一條商店設置（系統中應只有一條記錄）
     const settings = await StoreSetting.findOne();
     if (!settings) {
       ctx.status = 404;
       ctx.body = { error: "商店設置未找到" };
       return;
     }
-    ctx.body = { settings };
+    ctx.body = settings;
   } catch (error) {
     ctx.status = 500;
-    ctx.body = { error: error.message };
+    ctx.body = { error: "伺服器錯誤" };
   }
 });
 
@@ -376,13 +356,13 @@ router.put("/store-settings/logo", async (ctx) => {
     }
 
     // 如果已經存在舊的 Logo，刪除它
-    if (settings.appearance.logo) {
-      const oldLogoKey = settings.appearance.logo.replace(process.env.CLOUD_FRONT_URL, '');
+    if (settings.branding.logoUrl) {
+      const oldLogoKey = settings.branding.logoUrl.replace(process.env.CLOUD_FRONT_URL, '');
       await deleteImageFromS3(oldLogoKey);
     }
 
     // 更新商店設定中的 Logo URL
-    settings.appearance.logo = imageUrl;
+    settings.branding.logoUrl = imageUrl;
     await settings.save();
 
     ctx.body = { 
