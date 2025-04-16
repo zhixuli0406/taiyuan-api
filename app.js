@@ -57,43 +57,41 @@ app.use(cors({
 
 // 錯誤處理中間件
 app.use(async (ctx, next) => {
-  const start = Date.now();
-  console.log(`${ctx.method} ${ctx.url} - Request started`);
-  
   try {
     await next();
-    
-    const ms = Date.now() - start;
-    console.log(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms`);
   } catch (err) {
-    const ms = Date.now() - start;
-    console.error(`${ctx.method} ${ctx.url} - ${ctx.status} - ${ms}ms - Error:`, err);
-    throw err;
+    ctx.status = err.status || 500;
+    ctx.body = {
+      error: err.message || "伺服器錯誤",
+    };
   }
 });
 
-app.use(bodyParser({
-  enableTypes: ['json', 'form', 'text'], // 支援的請求類型
-  jsonLimit: '100mb', // JSON 格式的限制
-  formLimit: '100mb', // 表單數據大小限制
-  textLimit: '100mb', // 純文本數據大小限制
-}));
+// 設定 bodyParser
+app.use(
+  bodyParser({
+    enableTypes: ["json", "form", "text"], // 支援的請求類型
+    jsonLimit: "100mb", // JSON 格式的限制
+    formLimit: "100mb", // 表單資料大小限制
+    textLimit: "100mb", // 純文本資料大小限制
+  })
+);
 
 // 使用路由
+app.use(adminRoutes.routes());
 app.use(productRoutes.routes());
+app.use(transportRoutes.routes());
+app.use(storeSettingsRoutes.routes());
+app.use(imageRoutes.routes());
 app.use(authRoutes.routes());
 app.use(cartRoutes.routes());
 app.use(categoryRoutes.routes());
 app.use(customerRoutes.routes());
 app.use(couponRoutes.routes());
-app.use(adminRoutes.routes());
 app.use(carouselRoutes.routes());
 app.use(inventoryRoutes.routes());
 app.use(orderRoutes.routes());
-app.use(storeSettingsRoutes.routes());
 app.use(analyticsRoutes.routes());
-app.use(imageRoutes.routes());
-app.use(transportRoutes.routes());
 
 app.listen(3000, '0.0.0.0', () => {
   console.log('Server is running on port 3000');

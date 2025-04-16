@@ -226,7 +226,7 @@ const router = new Router();
 // 創建運輸方式
 router.post("/transports", ensureAdminAuth, async (ctx) => {
   const { name, fee, description, estimatedDays } = ctx.request.body;
-  const userId = ctx.state.user._id;
+  const userId = ctx.state.admin._id;
 
   const transport = new Transport({
     name,
@@ -276,7 +276,7 @@ router.get("/transports/:id", async (ctx) => {
 // 更新運輸方式
 router.put("/transports/:id", ensureAdminAuth, async (ctx) => {
   const { name, fee, description, estimatedDays, isActive } = ctx.request.body;
-  const userId = ctx.state.user._id;
+  const userId = ctx.state.admin._id;
 
   const transport = await Transport.findById(ctx.params.id);
   if (!transport) {
