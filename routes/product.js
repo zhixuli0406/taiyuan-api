@@ -420,7 +420,14 @@
  *         transport:
  *           type: array
  *           items:
- *             type: string
+ *             type: object
+ *             properties:
+ *               _id:
+ *                 type: string
+ *               name:
+ *                 type: string
+ *               fee:
+ *                 type: number
  *         isFeatured:
  *           type: boolean
  *         isActive:
