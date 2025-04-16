@@ -43,6 +43,8 @@ mongoose
 
 // 設定 CORS
 const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:3000",
   "https://taiyuan.dudustudio.monster",
   "https://www.taiyuan.dudustudio.monster",

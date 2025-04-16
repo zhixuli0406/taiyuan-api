@@ -69,7 +69,7 @@
         "tags": [
           "Admin"
         ],
-        "summary": "創建新管理員",
+        "summary": "建立新管理員",
         "security": [
           {
             "bearerAuth": []
@@ -111,7 +111,7 @@
         },
         "responses": {
           "201": {
-            "description": "管理員創建成功",
+            "description": "管理員建立成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -417,20 +417,27 @@
         }
       }
     },
-    "/api/auth/login": {
+    "/auth/login": {
       "post": {
+        "summary": "透過 Auth0 登入取得使用者資訊",
         "tags": [
           "Auth"
         ],
-        "summary": "通过 Auth0 登录获取用户信息",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
+                "required": [
+                  "email",
+                  "password"
+                ],
                 "properties": {
-                  "accessToken": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
                     "type": "string"
                   }
                 }
@@ -440,7 +447,7 @@
         },
         "responses": {
           "200": {
-            "description": "登录成功，返回 JWT",
+            "description": "登入成功，返回 JWT",
             "content": {
               "application/json": {
                 "schema": {
@@ -455,10 +462,10 @@
             }
           },
           "401": {
-            "description": "无效的登录凭证"
+            "description": "無效的登入憑證"
           },
           "404": {
-            "description": "用户未找到"
+            "description": "使用者未找到"
           }
         }
       }
@@ -1244,7 +1251,7 @@
         "tags": [
           "Coupons"
         ],
-        "summary": "創建折價券",
+        "summary": "建立折價券",
         "security": [
           {
             "bearerAuth": []
@@ -1258,42 +1265,40 @@
                 "type": "object",
                 "required": [
                   "code",
-                  "discountType",
-                  "discountValue"
+                  "discount",
+                  "validFrom",
+                  "validTo"
                 ],
                 "properties": {
                   "code": {
-                    "type": "string"
-                  },
-                  "discountType": {
                     "type": "string",
-                    "enum": [
-                      "percentage",
-                      "fixed"
-                    ]
+                    "description": "折價券代碼"
                   },
-                  "discountValue": {
-                    "type": "number"
+                  "discount": {
+                    "type": "number",
+                    "description": "折扣金額或百分比"
+                  },
+                  "validFrom": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "有效開始日期"
+                  },
+                  "validTo": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "有效結束日期"
                   },
                   "minPurchase": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "最低消費金額"
                   },
                   "maxDiscount": {
-                    "type": "number"
-                  },
-                  "startDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "endDate": {
-                    "type": "string",
-                    "format": "date-time"
-                  },
-                  "usageLimit": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "最高折扣金額"
                   },
                   "isActive": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "是否啟用"
                   }
                 }
               }
@@ -1302,19 +1307,11 @@
         },
         "responses": {
           "200": {
-            "description": "折價券創建成功",
+            "description": "折價券建立成功",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    },
-                    "coupon": {
-                      "$ref": "#/components/schemas/Coupon"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Coupon"
                 }
               }
             }
@@ -1335,14 +1332,9 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "coupons": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Coupon"
-                      }
-                    }
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Coupon"
                   }
                 }
               }
@@ -1351,7 +1343,7 @@
         }
       }
     },
-    "/coupons/verify": {
+    "/coupons/validate": {
       "post": {
         "tags": [
           "Coupons"
@@ -1365,14 +1357,16 @@
                 "type": "object",
                 "required": [
                   "code",
-                  "amount"
+                  "totalAmount"
                 ],
                 "properties": {
                   "code": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "折價券代碼"
                   },
-                  "amount": {
-                    "type": "number"
+                  "totalAmount": {
+                    "type": "number",
+                    "description": "訂單總金額"
                   }
                 }
               }
@@ -1387,14 +1381,11 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "isValid": {
+                    "valid": {
                       "type": "boolean"
                     },
                     "discount": {
                       "type": "number"
-                    },
-                    "coupon": {
-                      "$ref": "#/components/schemas/Coupon"
                     }
                   }
                 }
@@ -1442,7 +1433,7 @@
         "tags": [
           "Coupons"
         ],
-        "summary": "禁用折價券",
+        "summary": "停用折價券",
         "parameters": [
           {
             "name": "id",
@@ -1456,7 +1447,7 @@
         ],
         "responses": {
           "200": {
-            "description": "折價券禁用成功",
+            "description": "折價券停用成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -3552,11 +3543,11 @@
         "tags": [
           "StoreSetting"
         ],
-        "summary": "讀取商店設置",
-        "description": "獲取商店的所有設置信息",
+        "summary": "讀取商店設定",
+        "description": "獲取商店的所有設定資訊",
         "responses": {
           "200": {
-            "description": "成功獲取商店設置",
+            "description": "成功獲取商店設定",
             "content": {
               "application/json": {
                 "schema": {
@@ -3566,7 +3557,7 @@
             }
           },
           "404": {
-            "description": "商店設置未找到",
+            "description": "商店設定未找到",
             "content": {
               "application/json": {
                 "schema": {
@@ -3574,7 +3565,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "商店設置未找到"
+                      "example": "商店設定未找到"
                     }
                   }
                 }
@@ -3590,7 +3581,7 @@
         "tags": [
           "Store Settings"
         ],
-        "summary": "更新商店設置",
+        "summary": "更新商店設定",
         "requestBody": {
           "required": true,
           "content": {
@@ -3604,7 +3595,7 @@
         },
         "responses": {
           "200": {
-            "description": "商店設置更新成功",
+            "description": "商店設定更新成功",
             "content": {
               "application/json": {
                 "schema": {
@@ -3623,7 +3614,7 @@
             }
           },
           "404": {
-            "description": "商店設置未找到"
+            "description": "商店設定未找到"
           },
           "500": {
             "description": "伺服器錯誤"
@@ -3643,7 +3634,6 @@
             "name": "fileType",
             "in": "query",
             "required": true,
-            "description": "文件類型，必須是 .jpg、.jpeg、.png 或 .gif",
             "schema": {
               "type": "string",
               "enum": [
@@ -3652,7 +3642,7 @@
                 ".png",
                 ".gif"
               ],
-              "example": ".jpg"
+              "description": "文件類型"
             }
           }
         ],
@@ -3664,29 +3654,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "uploadUrl": {
+                    "url": {
                       "type": "string",
-                      "description": "用於上傳的預簽名 URL",
-                      "example": "https://s3.amazonaws.com/bucket/..."
+                      "description": "預簽名 URL"
                     },
-                    "imageUrl": {
-                      "type": "string",
-                      "description": "上傳完成後的圖片訪問 URL",
-                      "example": "https://cdn.example.com/logos/image.jpg"
-                    },
-                    "headers": {
+                    "fields": {
                       "type": "object",
-                      "description": "上傳時需要的 headers",
-                      "properties": {
-                        "Content-Type": {
-                          "type": "string",
-                          "example": "image/jpeg"
-                        },
-                        "x-amz-acl": {
-                          "type": "string",
-                          "example": "public-read"
-                        }
-                      }
+                      "description": "上傳時需要包含的表單字段"
                     }
                   }
                 }
@@ -3694,36 +3668,10 @@
             }
           },
           "400": {
-            "description": "不支持的文件類型",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "不支持的文件類型"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "不支持的文件類型"
           },
           "500": {
-            "description": "生成預簽名 URL 失敗",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "生成預簽名 URL 失敗"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "伺服器錯誤"
           }
         }
       }
@@ -3794,7 +3742,7 @@
             }
           },
           "404": {
-            "description": "商店設置未找到",
+            "description": "商店設定未找到",
             "content": {
               "application/json": {
                 "schema": {
@@ -3802,7 +3750,7 @@
                   "properties": {
                     "error": {
                       "type": "string",
-                      "example": "商店設置未找到"
+                      "example": "商店設定未找到"
                     }
                   }
                 }
@@ -4398,7 +4346,7 @@
           "createdAt": {
             "type": "string",
             "format": "date-time",
-            "description": "創建時間"
+            "description": "建立時間"
           },
           "updatedAt": {
             "type": "string",
@@ -4473,7 +4421,7 @@
     },
     {
       "name": "Auth",
-      "description": "用户认证的 API"
+      "description": "使用者認證的 API"
     },
     {
       "name": "Carousels",
@@ -4513,7 +4461,7 @@
     },
     {
       "name": "StoreSetting",
-      "description": "商店設置管理 API"
+      "description": "商店設定管理 API"
     },
     {
       "name": "Transport",
