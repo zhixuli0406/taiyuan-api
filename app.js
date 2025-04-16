@@ -18,10 +18,12 @@ const inventoryRoutes = require("./routes/inventory");
 const orderRoutes = require("./routes/orders");
 const storeSettingsRoutes = require("./routes/storeSettings");
 const analyticsRoutes = require("./routes/analytics");
-const initializeAdmin = require("./config/initAdmin");
-const initializeStoreSettings = require("./config/initStore");
 const imageRoutes = require("./routes/images");
 const transportRoutes = require("./routes/transport");
+
+const initializeAdmin = require("./config/initAdmin");
+const initializeStoreSettings = require("./config/initStore");
+
 dotenv.config();
 connectDB().then(()=>{
   initializeAdmin();
