@@ -525,6 +525,8 @@ router.get("/products", async (ctx) => {
   if (search) query.name = new RegExp(search, "i"); // 按名稱過濾
 
   const products = await Product.find(query)
+    .populate("category")
+    .populate("transport", "name fee") // 添加 transport 的 populate
     .sort({ createdAt: -1 }) // 按創建日期降序
     .skip((page - 1) * limit)
     .limit(Number(limit));
@@ -538,7 +540,10 @@ router.get("/products", async (ctx) => {
 router.get("/products/:id", async (ctx) => {
   const { id } = ctx.params;
 
-  const product = await Product.findById(id).populate("category");
+  const product = await Product.findById(id)
+    .populate("category")
+    .populate("transport", "name fee"); // 添加 transport 的 populate
+
   if (!product) {
     ctx.status = 404;
     ctx.body = { error: "Product not found" };
