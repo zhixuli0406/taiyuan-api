@@ -100,7 +100,6 @@ app.use(router.allowedMethods());
 
 // 設定 Swagger UI
 app.use(
-  "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerDocument, {
     customCss: ".swagger-ui .topbar { display: none }",
