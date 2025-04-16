@@ -187,7 +187,7 @@ const jwt = require("jsonwebtoken");
 const router = new Router();
 
 // 管理員登入
-router.post('/login', async (ctx) => {
+router.post('/admin/login', async (ctx) => {
   const { email, password } = ctx.request.body;
   try {
     const admin = await Admin.findOne({ email });
