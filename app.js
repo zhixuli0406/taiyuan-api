@@ -78,12 +78,12 @@ app.use(
 );
 
 // 使用路由
+app.use(authRoutes.routes());
 app.use(adminRoutes.routes());
 app.use(productRoutes.routes());
 app.use(transportRoutes.routes());
 app.use(storeSettingsRoutes.routes());
 app.use(imageRoutes.routes());
-app.use(authRoutes.routes());
 app.use(cartRoutes.routes());
 app.use(categoryRoutes.routes());
 app.use(customerRoutes.routes());

@@ -186,41 +186,30 @@ const jwt = require("jsonwebtoken");
 
 const router = new Router();
 
-// 管理員登入 (POST /admin/login)
-router.post("/admin/login", async (ctx) => {
+// 管理員登入
+router.post('/login', async (ctx) => {
   const { email, password } = ctx.request.body;
+  try {
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      ctx.status = 401;
+      ctx.body = { error: "無效的電子郵件或密碼" };
+      return;
+    }
 
-  const admin = await Admin.findOne({ email });
-  if (!admin) {
+    const isMatch = await admin.matchPassword(password);
+    if (!isMatch) {
+      ctx.status = 401;
+      ctx.body = { error: "無效的電子郵件或密碼" };
+      return;
+    }
+
+    const token = jwt.sign({ _id: admin._id, email: admin.email, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    ctx.body = { token, admin };
+  } catch (err) {
     ctx.status = 401;
     ctx.body = { error: "無效的電子郵件或密碼" };
-    return;
   }
-
-  // 驗證密碼
-  const isValidPassword = await bcrypt.compare(password, admin.password);
-  if (!isValidPassword) {
-    ctx.status = 401;
-    ctx.body = { error: "無效的電子郵件或密碼" };
-    return;
-  }
-
-  // 簽發 JWT
-  const token = jwt.sign(
-    { id: admin._id, role: admin.role },
-    process.env.JWT_SECRET,
-    { algorithm: "HS256", expiresIn: "1d" } // Token 有效期為 1 天
-  );
-
-  ctx.body = {
-    token,
-    admin: {
-      _id: admin._id,
-      email: admin.email,
-      name: admin.name,
-      role: admin.role,
-    },
-  };
 });
 
 // 創建新管理員 (POST /admin)

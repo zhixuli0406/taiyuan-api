@@ -18,6 +18,11 @@ const ensureAdminAuth = async (ctx, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded._id) {
+      ctx.status = 401;
+      ctx.body = { error: "Invalid token" };
+      return;
+    }
     ctx.state.admin = decoded; // 儲存到 ctx.state
     await next();
   } catch (error) {

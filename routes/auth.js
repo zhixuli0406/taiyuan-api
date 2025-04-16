@@ -60,7 +60,7 @@ router.post('/login', async ctx => {
     }
 
     // JWT 簽署
-    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ _id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
     ctx.body = { token };
   } catch (err) {
     ctx.status = 401;
