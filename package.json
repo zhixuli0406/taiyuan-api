@@ -13,6 +13,7 @@
     "aws-sdk": "^2.1692.0",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.5",
     "ecpay-logistics": "^1.0.0",
     "ecpay-payment": "^1.1.1",
