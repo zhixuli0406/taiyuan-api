@@ -12,7 +12,7 @@
  * /coupons:
  *   post:
  *     tags: [Coupons]
- *     summary: 創建折價券
+ *     summary: 建立折價券
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -23,42 +23,40 @@
  *             type: object
  *             required:
  *               - code
- *               - discountType
- *               - discountValue
+ *               - discount
+ *               - validFrom
+ *               - validTo
  *             properties:
  *               code:
  *                 type: string
- *               discountType:
- *                 type: string
- *                 enum: [percentage, fixed]
- *               discountValue:
+ *                 description: 折價券代碼
+ *               discount:
  *                 type: number
+ *                 description: 折扣金額或百分比
+ *               validFrom:
+ *                 type: string
+ *                 format: date-time
+ *                 description: 有效開始日期
+ *               validTo:
+ *                 type: string
+ *                 format: date-time
+ *                 description: 有效結束日期
  *               minPurchase:
  *                 type: number
+ *                 description: 最低消費金額
  *               maxDiscount:
  *                 type: number
- *               startDate:
- *                 type: string
- *                 format: date-time
- *               endDate:
- *                 type: string
- *                 format: date-time
- *               usageLimit:
- *                 type: number
+ *                 description: 最高折扣金額
  *               isActive:
  *                 type: boolean
+ *                 description: 是否啟用
  *     responses:
  *       200:
- *         description: 折價券創建成功
+ *         description: 折價券建立成功
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 coupon:
- *                   $ref: '#/components/schemas/Coupon'
+ *               $ref: '#/components/schemas/Coupon'
  *       400:
  *         description: 請求參數錯誤
  */
@@ -75,17 +73,14 @@
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 coupons:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Coupon'
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Coupon'
  */
 
 /**
  * @openapi
- * /coupons/verify:
+ * /coupons/validate:
  *   post:
  *     tags: [Coupons]
  *     summary: 驗證及使用折價券
@@ -97,12 +92,14 @@
  *             type: object
  *             required:
  *               - code
- *               - amount
+ *               - totalAmount
  *             properties:
  *               code:
  *                 type: string
- *               amount:
+ *                 description: 折價券代碼
+ *               totalAmount:
  *                 type: number
+ *                 description: 訂單總金額
  *     responses:
  *       200:
  *         description: 折價券驗證成功
@@ -111,12 +108,10 @@
  *             schema:
  *               type: object
  *               properties:
- *                 isValid:
+ *                 valid:
  *                   type: boolean
  *                 discount:
  *                   type: number
- *                 coupon:
- *                   $ref: '#/components/schemas/Coupon'
  *       400:
  *         description: 折價券無效或不適用
  *       404:
@@ -148,7 +143,7 @@
  * /coupons/{id}/disable:
  *   put:
  *     tags: [Coupons]
- *     summary: 禁用折價券
+ *     summary: 停用折價券
  *     parameters:
  *       - name: id
  *         in: path
@@ -158,7 +153,7 @@
  *           type: string
  *     responses:
  *       200:
- *         description: 折價券禁用成功
+ *         description: 折價券停用成功
  *         content:
  *           application/json:
  *             schema:
@@ -268,9 +263,9 @@ router.get("/coupons", ensureAdminAuth, async (ctx) => {
   ctx.body = { coupons };
 });
 
-// 驗證及使用折價券 (POST /coupons/verify)
-router.post("/coupons/verify", async (ctx) => {
-  const { code, amount } = ctx.request.body;
+// 驗證及使用折價券 (POST /coupons/validate)
+router.post("/coupons/validate", async (ctx) => {
+  const { code, totalAmount } = ctx.request.body;
 
   const coupon = await Coupon.findOne({ code });
 

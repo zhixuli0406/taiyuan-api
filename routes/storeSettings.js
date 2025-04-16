@@ -8,7 +8,7 @@ const router = new Router();
  * @openapi
  * tags:
  *   name: StoreSetting
- *   description: 商店設置管理 API
+ *   description: 商店設定管理 API
  */
 
 /**
@@ -73,7 +73,7 @@ const router = new Router();
  *         createdAt:
  *           type: string
  *           format: date-time
- *           description: 創建時間
+ *           description: 建立時間
  *         updatedAt:
  *           type: string
  *           format: date-time
@@ -85,17 +85,17 @@ const router = new Router();
  * /store-settings:
  *   get:
  *     tags: [StoreSetting]
- *     summary: 讀取商店設置
- *     description: 獲取商店的所有設置信息
+ *     summary: 讀取商店設定
+ *     description: 獲取商店的所有設定資訊
  *     responses:
  *       200:
- *         description: 成功獲取商店設置
+ *         description: 成功獲取商店設定
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/StoreSetting'
  *       404:
- *         description: 商店設置未找到
+ *         description: 商店設定未找到
  *         content:
  *           application/json:
  *             schema:
@@ -103,7 +103,7 @@ const router = new Router();
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "商店設置未找到"
+ *                   example: "商店設定未找到"
  *       500:
  *         description: 伺服器錯誤
  */
@@ -112,7 +112,7 @@ router.get("/store-settings", async (ctx) => {
     const settings = await StoreSetting.findOne();
     if (!settings) {
       ctx.status = 404;
-      ctx.body = { error: "商店設置未找到" };
+      ctx.body = { error: "商店設定未找到" };
       return;
     }
     ctx.body = settings;
@@ -128,7 +128,7 @@ router.get("/store-settings", async (ctx) => {
  *   put:
  *     tags:
  *       - Store Settings
- *     summary: 更新商店設置
+ *     summary: 更新商店設定
  *     requestBody:
  *       required: true
  *       content:
@@ -138,7 +138,7 @@ router.get("/store-settings", async (ctx) => {
  *             additionalProperties: true
  *     responses:
  *       200:
- *         description: 商店設置更新成功
+ *         description: 商店設定更新成功
  *         content:
  *           application/json:
  *             schema:
@@ -150,7 +150,7 @@ router.get("/store-settings", async (ctx) => {
  *                   type: object
  *                   additionalProperties: true
  *       404:
- *         description: 商店設置未找到
+ *         description: 商店設定未找到
  *       500:
  *         description: 伺服器錯誤
  */
@@ -161,7 +161,7 @@ router.put("/store-settings", async (ctx) => {
     const settings = await StoreSetting.findOne();
     if (!settings) {
       ctx.status = 404;
-      ctx.body = { error: "商店設置未找到" };
+      ctx.body = { error: "商店設定未找到" };
       return;
     }
 
@@ -199,11 +199,10 @@ router.put("/store-settings", async (ctx) => {
  *       - name: fileType
  *         in: query
  *         required: true
- *         description: 文件類型，必須是 .jpg、.jpeg、.png 或 .gif
  *         schema:
  *           type: string
- *           enum: ['.jpg', '.jpeg', '.png', '.gif']
- *           example: '.jpg'
+ *           enum: [.jpg, .jpeg, .png, .gif]
+ *           description: 文件類型
  *     responses:
  *       200:
  *         description: 成功獲取預簽名 URL
@@ -212,61 +211,31 @@ router.put("/store-settings", async (ctx) => {
  *             schema:
  *               type: object
  *               properties:
- *                 uploadUrl:
+ *                 url:
  *                   type: string
- *                   description: 用於上傳的預簽名 URL
- *                   example: "https://s3.amazonaws.com/bucket/..."
- *                 imageUrl:
- *                   type: string
- *                   description: 上傳完成後的圖片訪問 URL
- *                   example: "https://cdn.example.com/logos/image.jpg"
- *                 headers:
+ *                   description: 預簽名 URL
+ *                 fields:
  *                   type: object
- *                   description: 上傳時需要的 headers
- *                   properties:
- *                     'Content-Type':
- *                       type: string
- *                       example: "image/jpeg"
- *                     'x-amz-acl':
- *                       type: string
- *                       example: "public-read"
+ *                   description: 上傳時需要包含的表單字段
  *       400:
  *         description: 不支持的文件類型
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "不支持的文件類型"
  *       500:
- *         description: 生成預簽名 URL 失敗
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "生成預簽名 URL 失敗"
+ *         description: 伺服器錯誤
  */
 router.get("/store-settings/logo/presigned-url", async (ctx) => {
   const { fileType } = ctx.query;
-  
-  // 驗證文件類型
-  if (!fileType.match(/\.(jpg|jpeg|png|gif)$/i)) {
+  if (!fileType) {
     ctx.status = 400;
-    ctx.body = { error: "不支持的文件類型" };
+    ctx.body = { error: "請提供文件類型" };
     return;
   }
 
   try {
-    const urls = await generatePresignedUrl("logos", fileType);
-    ctx.body = urls;
+    const { url, fields } = await generatePresignedUrl(fileType);
+    ctx.body = { url, fields };
   } catch (error) {
     ctx.status = 500;
-    ctx.body = { error: "生成預簽名 URL 失敗" };
+    ctx.body = { error: error.message };
   }
 });
 
@@ -317,7 +286,7 @@ router.get("/store-settings/logo/presigned-url", async (ctx) => {
  *                   type: string
  *                   example: "無效的圖片 URL"
  *       404:
- *         description: 商店設置未找到
+ *         description: 商店設定未找到
  *         content:
  *           application/json:
  *             schema:
@@ -325,7 +294,7 @@ router.get("/store-settings/logo/presigned-url", async (ctx) => {
  *               properties:
  *                 error:
  *                   type: string
- *                   example: "商店設置未找到"
+ *                   example: "商店設定未找到"
  *       500:
  *         description: 伺服器錯誤
  *         content:
@@ -347,11 +316,11 @@ router.put("/store-settings/logo", async (ctx) => {
   }
 
   try {
-    // 查詢商店當前設置
+    // 查詢商店當前設定
     const settings = await StoreSetting.findOne();
     if (!settings) {
       ctx.status = 404;
-      ctx.body = { error: "商店設置未找到" };
+      ctx.body = { error: "商店設定未找到" };
       return;
     }
 

@@ -41,7 +41,7 @@ mongoose
   .then(() => console.log("MongoDB 連接成功"))
   .catch((err) => console.error("MongoDB 連接失敗:", err));
 
-// 配置 CORS
+// 設定 CORS
 const allowedOrigins = [
   "http://localhost:3000",
   "https://taiyuan.dudustudio.monster",
@@ -76,13 +76,13 @@ app.use(async (ctx, next) => {
   }
 });
 
-// 配置 bodyParser
+// 設定 bodyParser
 app.use(
   bodyParser({
     enableTypes: ["json", "form", "text"], // 支援的請求類型
     jsonLimit: "100mb", // JSON 格式的限制
-    formLimit: "100mb", // 表單數據大小限制
-    textLimit: "100mb", // 純文本數據大小限制
+    formLimit: "100mb", // 表單資料大小限制
+    textLimit: "100mb", // 純文本資料大小限制
   })
 );
 
@@ -96,7 +96,7 @@ router.use("/api", imageRoutes.routes());
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-// 配置 Swagger UI
+// 設定 Swagger UI
 app.use(
   "/api-docs",
   swaggerUi.serve,

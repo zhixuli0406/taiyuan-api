@@ -48,7 +48,7 @@
  * /admin:
  *   post:
  *     tags: [Admin]
- *     summary: 創建新管理員
+ *     summary: 建立新管理員
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -74,7 +74,7 @@
  *                 enum: [super_admin, admin]
  *     responses:
  *       201:
- *         description: 管理員創建成功
+ *         description: 管理員建立成功
  *         content:
  *           application/json:
  *             schema:
@@ -129,16 +129,16 @@
  *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               name:
- *                 type: string
- *               role:
- *                 type: string
- *                 enum: [super_admin, admin]
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                   enum: [super_admin, admin]
  *     responses:
  *       200:
  *         description: 管理員更新成功
@@ -198,29 +198,21 @@ router.post("/admin/login", async (ctx) => {
   }
 
   // 驗證密碼
-  const isValidPassword = await bcrypt.compare(password, admin.password);
-  if (!isValidPassword) {
+  const isMatch = await admin.comparePassword(password);
+  if (!isMatch) {
     ctx.status = 401;
     ctx.body = { error: "無效的電子郵件或密碼" };
     return;
   }
 
-  // 簽發 JWT
+  // 生成 JWT
   const token = jwt.sign(
-    { id: admin._id, role: admin.role },
+    { id: admin._id, email: admin.email, role: admin.role },
     process.env.JWT_SECRET,
-    { algorithm: "HS256", expiresIn: "1d" } // Token 有效期為 1 天
+    { expiresIn: "1d" }
   );
 
-  ctx.body = {
-    token,
-    admin: {
-      _id: admin._id,
-      email: admin.email,
-      name: admin.name,
-      role: admin.role,
-    },
-  };
+  ctx.body = { token, admin };
 });
 
 // 創建新管理員 (POST /admin)
