@@ -18,7 +18,7 @@ const storeSettingSchema = new mongoose.Schema({
   },
   socialLinks: {
     facebook: { type: String, default: "" },
-    twitter: { type: String, default: "" },
+    line: { type: String, default: "" },
     instagram: { type: String, default: "" },
   },
 }, { timestamps: true });
