@@ -168,6 +168,10 @@ router.put("/store-settings", async (ctx) => {
     // 更新設定
     for (const key in updates) {
       if (updates[key] && typeof updates[key] === "object") {
+        // 确保嵌套对象存在
+        if (!settings[key]) {
+          settings[key] = {};
+        }
         for (const subKey in updates[key]) {
           settings[key][subKey] = updates[key][subKey] ?? settings[key][subKey];
         }
