@@ -73,9 +73,12 @@ const router = new Router();
  *             facebook:
  *               type: string
  *               description: Facebook 連結
- *             twitter:
+ *             line:
  *               type: string
- *               description: Twitter 連結
+ *               description: Line 連結
+ *             x:
+ *               type: string
+ *               description: X (Twitter) 連結
  *             instagram:
  *               type: string
  *               description: Instagram 連結

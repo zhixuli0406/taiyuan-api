@@ -4739,6 +4739,10 @@
             "type": "string",
             "description": "商店名稱"
           },
+          "description": {
+            "type": "string",
+            "description": "商店描述"
+          },
           "contact": {
             "type": "object",
             "properties": {
@@ -4763,9 +4767,17 @@
                 "type": "string",
                 "description": "城市"
               },
-              "street": {
+              "district": {
+                "type": "string",
+                "description": "行政區"
+              },
+              "addressLine": {
                 "type": "string",
                 "description": "詳細地址"
+              },
+              "postalCode": {
+                "type": "string",
+                "description": "郵遞區號"
               }
             }
           },
@@ -4800,9 +4812,13 @@
                 "type": "string",
                 "description": "Facebook 連結"
               },
-              "twitter": {
+              "line": {
                 "type": "string",
-                "description": "Twitter 連結"
+                "description": "Line 連結"
+              },
+              "x": {
+                "type": "string",
+                "description": "X (Twitter) 連結"
               },
               "instagram": {
                 "type": "string",
