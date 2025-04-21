@@ -214,44 +214,39 @@
 
 const Router = require("koa-router");
 const Coupon = require("../models/Coupon");
+const { ensureAdminAuth } = require("../middlewares/auth");
 
 const router = new Router();
-
-// Middleware: 確保管理員身份
-const ensureAdminAuth = async (ctx, next) => {
-  if (!ctx.state.admin) {
-    ctx.status = 403;
-    ctx.body = { error: "Forbidden" };
-    return;
-  }
-  await next();
-};
 
 // 創建折價券 (POST /coupons)
 router.post("/coupons", ensureAdminAuth, async (ctx) => {
   const {
     code,
-    discountType,
-    discountValue,
+    type,
+    value,
     minPurchase,
     maxDiscount,
     startDate,
     endDate,
     usageLimit,
     isActive,
+    applicableToProducts,
+    applicableToCategories
   } = ctx.request.body;
 
   try {
     const newCoupon = new Coupon({
       code,
-      discountType,
-      discountValue,
+      type,
+      value,
       minPurchase,
       maxDiscount,
       startDate,
       endDate,
       usageLimit,
       isActive,
+      applicableToProducts,
+      applicableToCategories
     });
 
     await newCoupon.save();
@@ -296,7 +291,7 @@ router.post("/coupons/verify", async (ctx) => {
   }
 
   // 檢查使用次數限制
-  if (coupon.usageCount >= coupon.usageLimit) {
+  if (coupon.usedCount >= coupon.usageLimit) {
     ctx.status = 400;
     ctx.body = { error: "Coupon usage limit reached" };
     return;
@@ -304,17 +299,17 @@ router.post("/coupons/verify", async (ctx) => {
 
   // 計算折扣
   let discount = 0;
-  if (coupon.discountType === "fixed") {
-    discount = coupon.discountValue;
-  } else if (coupon.discountType === "percentage") {
-    discount = (amount * coupon.discountValue) / 100;
+  if (coupon.type === "fixed") {
+    discount = coupon.value;
+  } else if (coupon.type === "percentage") {
+    discount = (amount * coupon.value) / 100;
     if (coupon.maxDiscount) {
       discount = Math.min(discount, coupon.maxDiscount);
     }
   }
 
   // 更新使用次數
-  coupon.usageCount += 1;
+  coupon.usedCount += 1;
   await coupon.save();
 
   ctx.body = {

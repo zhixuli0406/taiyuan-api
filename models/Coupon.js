@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const couponSchema = new mongoose.Schema(
   {
     code: { type: String, unique: true, required: true }, // 折價券代碼
-    type: { type: String, enum: ["FixedAmount", "Percentage"], required: true }, // 折扣類型
+    type: { type: String, enum: ["fixed", "percentage"], required: true }, // 折扣類型
     value: { type: Number, required: true }, // 折扣值（如 100 元或 10%）
     maxDiscount: { type: Number }, // 折扣上限 (當百分比折扣適用)
     minPurchase: { type: Number, default: 0 }, // 最低消費金額限制

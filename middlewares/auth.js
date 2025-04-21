@@ -8,6 +8,11 @@ const ensureAdminAuth = async (ctx, next) => {
     return next();
   }
 
+  // 檢查是否為豁免路由
+  if (exemptRoutes.includes(ctx.path)) {
+    return next();
+  }
+
   // 檢查 token 等認證邏輯
   const token = ctx.headers.authorization?.split(' ')[1];
   if (!token) {
