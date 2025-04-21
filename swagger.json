@@ -1459,6 +1459,135 @@
       }
     },
     "/coupons/{id}": {
+      "put": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "更新折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "折價券的 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "fixed",
+                      "percentage"
+                    ]
+                  },
+                  "value": {
+                    "type": "number"
+                  },
+                  "minPurchase": {
+                    "type": "number"
+                  },
+                  "maxDiscount": {
+                    "type": "number"
+                  },
+                  "startDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "usageLimit": {
+                    "type": "number"
+                  },
+                  "isActive": {
+                    "type": "boolean"
+                  },
+                  "applicableToProducts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "applicableToCategories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "折價券更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "coupon": {
+                      "$ref": "#/components/schemas/Coupon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "請求參數錯誤",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Coupons"
@@ -1539,6 +1668,65 @@
         "responses": {
           "200": {
             "description": "折價券禁用成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "coupon": {
+                      "$ref": "#/components/schemas/Coupon"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "折價券未找到",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/enable": {
+      "put": {
+        "tags": [
+          "Coupons"
+        ],
+        "summary": "啟用折價券",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "折價券的 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "折價券啟用成功",
             "content": {
               "application/json": {
                 "schema": {

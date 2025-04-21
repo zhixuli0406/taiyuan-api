@@ -155,6 +155,89 @@
 /**
  * @openapi
  * /coupons/{id}:
+ *   put:
+ *     tags: [Coupons]
+ *     summary: 更新折價券
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 折價券的 ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [fixed, percentage]
+ *               value:
+ *                 type: number
+ *               minPurchase:
+ *                 type: number
+ *               maxDiscount:
+ *                 type: number
+ *               startDate:
+ *                 type: string
+ *                 format: date-time
+ *               endDate:
+ *                 type: string
+ *                 format: date-time
+ *               usageLimit:
+ *                 type: number
+ *               isActive:
+ *                 type: boolean
+ *               applicableToProducts:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               applicableToCategories:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: 折價券更新成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 coupon:
+ *                   $ref: '#/components/schemas/Coupon'
+ *       400:
+ *         description: 請求參數錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: 折價券未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+/**
+ * @openapi
+ * /coupons/{id}:
  *   delete:
  *     tags: [Coupons]
  *     summary: 刪除折價券
@@ -206,6 +289,44 @@
  *     responses:
  *       200:
  *         description: 折價券禁用成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 coupon:
+ *                   $ref: '#/components/schemas/Coupon'
+ *       404:
+ *         description: 折價券未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+/**
+ * @openapi
+ * /coupons/{id}/enable:
+ *   put:
+ *     tags: [Coupons]
+ *     summary: 啟用折價券
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: 折價券的 ID
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: 折價券啟用成功
  *         content:
  *           application/json:
  *             schema:
@@ -381,6 +502,52 @@ router.post("/coupons/verify", async (ctx) => {
   };
 });
 
+// 更新折價券 (PUT /coupons/:id)
+router.put("/coupons/:id", ensureAdminAuth, async (ctx) => {
+  const { id } = ctx.params;
+  const {
+    code,
+    type,
+    value,
+    minPurchase,
+    maxDiscount,
+    startDate,
+    endDate,
+    usageLimit,
+    isActive,
+    applicableToProducts,
+    applicableToCategories
+  } = ctx.request.body;
+
+  try {
+    const coupon = await Coupon.findById(id);
+    if (!coupon) {
+      ctx.status = 404;
+      ctx.body = { error: "Coupon not found" };
+      return;
+    }
+
+    // 更新可選欄位
+    if (code) coupon.code = code;
+    if (type) coupon.type = type;
+    if (value) coupon.value = value;
+    if (minPurchase) coupon.minPurchase = minPurchase;
+    if (maxDiscount) coupon.maxDiscount = maxDiscount;
+    if (startDate) coupon.startDate = startDate;
+    if (endDate) coupon.endDate = endDate;
+    if (usageLimit) coupon.usageLimit = usageLimit;
+    if (typeof isActive === 'boolean') coupon.isActive = isActive;
+    if (applicableToProducts) coupon.applicableToProducts = applicableToProducts;
+    if (applicableToCategories) coupon.applicableToCategories = applicableToCategories;
+
+    await coupon.save();
+    ctx.body = { message: "Coupon updated successfully", coupon };
+  } catch (error) {
+    ctx.status = 400;
+    ctx.body = { error: error.message };
+  }
+});
+
 // 刪除折價券 (DELETE /coupons/:id)
 router.delete("/coupons/:id", ensureAdminAuth, async (ctx) => {
   const { id } = ctx.params;
@@ -410,6 +577,27 @@ router.put("/coupons/:id/disable", ensureAdminAuth, async (ctx) => {
   coupon.isActive = false;
   await coupon.save();
   ctx.body = { message: "Coupon disabled successfully", coupon };
+});
+
+// 啟用折價券 (PUT /coupons/:id/enable)
+router.put("/coupons/:id/enable", ensureAdminAuth, async (ctx) => {
+  const { id } = ctx.params;
+
+  try {
+    const coupon = await Coupon.findById(id);
+    if (!coupon) {
+      ctx.status = 404;
+      ctx.body = { error: "Coupon not found" };
+      return;
+    }
+
+    coupon.isActive = true;
+    await coupon.save();
+    ctx.body = { message: "Coupon enabled successfully", coupon };
+  } catch (error) {
+    ctx.status = 400;
+    ctx.body = { error: error.message };
+  }
 });
 
 module.exports = router;
