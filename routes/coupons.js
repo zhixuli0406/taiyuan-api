@@ -23,15 +23,15 @@
  *             type: object
  *             required:
  *               - code
- *               - discountType
- *               - discountValue
+ *               - type
+ *               - value
  *             properties:
  *               code:
  *                 type: string
- *               discountType:
+ *               type:
  *                 type: string
- *                 enum: [percentage, fixed]
- *               discountValue:
+ *                 enum: [fixed, percentage]
+ *               value:
  *                 type: number
  *               minPurchase:
  *                 type: number
@@ -47,6 +47,14 @@
  *                 type: number
  *               isActive:
  *                 type: boolean
+ *               applicableToProducts:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               applicableToCategories:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       200:
  *         description: 折價券創建成功
@@ -61,6 +69,13 @@
  *                   $ref: '#/components/schemas/Coupon'
  *       400:
  *         description: 請求參數錯誤
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 /**
@@ -111,16 +126,30 @@
  *             schema:
  *               type: object
  *               properties:
- *                 isValid:
- *                   type: boolean
+ *                 message:
+ *                   type: string
  *                 discount:
  *                   type: number
  *                 coupon:
  *                   $ref: '#/components/schemas/Coupon'
  *       400:
  *         description: 折價券無效或不適用
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *       404:
  *         description: 折價券未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 /**
@@ -129,6 +158,8 @@
  *   delete:
  *     tags: [Coupons]
  *     summary: 刪除折價券
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -139,8 +170,22 @@
  *     responses:
  *       200:
  *         description: 折價券刪除成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       404:
  *         description: 折價券未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 /**
@@ -149,6 +194,8 @@
  *   put:
  *     tags: [Coupons]
  *     summary: 禁用折價券
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - name: id
  *         in: path
@@ -170,6 +217,13 @@
  *                   $ref: '#/components/schemas/Coupon'
  *       404:
  *         description: 折價券未找到
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 /**
@@ -183,10 +237,10 @@
  *           type: string
  *         code:
  *           type: string
- *         discountType:
+ *         type:
  *           type: string
- *           enum: [percentage, fixed]
- *         discountValue:
+ *           enum: [fixed, percentage]
+ *         value:
  *           type: number
  *         minPurchase:
  *           type: number
@@ -200,10 +254,18 @@
  *           format: date-time
  *         usageLimit:
  *           type: number
- *         usageCount:
+ *         usedCount:
  *           type: number
  *         isActive:
  *           type: boolean
+ *         applicableToProducts:
+ *           type: array
+ *           items:
+ *             type: string
+ *         applicableToCategories:
+ *           type: array
+ *           items:
+ *             type: string
  *         createdAt:
  *           type: string
  *           format: date-time
