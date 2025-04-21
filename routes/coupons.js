@@ -219,7 +219,7 @@ const router = new Router();
 
 // Middleware: 確保管理員身份
 const ensureAdminAuth = async (ctx, next) => {
-  if (!ctx.state.user || !ctx.state.user.isAdmin) {
+  if (!ctx.state.admin) {
     ctx.status = 403;
     ctx.body = { error: "Forbidden" };
     return;
