@@ -263,7 +263,7 @@ router.post("/coupons", ensureAdminAuth, async (ctx) => {
 });
 
 // 獲取所有折價券 (GET /coupons)
-router.get("/coupons", ensureAdminAuth, async (ctx) => {
+router.get("/coupons", async (ctx) => {
   const coupons = await Coupon.find();
   ctx.body = { coupons };
 });
