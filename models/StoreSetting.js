@@ -10,7 +10,9 @@ const storeSettingSchema = new mongoose.Schema({
   address: {
     country: { type: String, default: "" },                    // 國家
     city: { type: String, default: "" },                       // 城市
+    district: { type: String, default: "" },                   // 行政區
     addressLine: { type: String, default: "" },                // 詳細地址
+    postalCode: { type: String, default: "" },                 // 郵遞區號
   },
   businessHours: { type: String, default: "9:00 AM - 9:00 PM" }, // 營業時間
   appearance: {

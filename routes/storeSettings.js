@@ -42,9 +42,15 @@ const router = new Router();
  *             city:
  *               type: string
  *               description: 城市
- *             street:
+ *             district:
+ *               type: string
+ *               description: 行政區
+ *             addressLine:
  *               type: string
  *               description: 詳細地址
+ *             postalCode:
+ *               type: string
+ *               description: 郵遞區號
  *         businessHours:
  *           type: object
  *           properties:
