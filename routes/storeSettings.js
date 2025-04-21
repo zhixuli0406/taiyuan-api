@@ -21,6 +21,9 @@ const router = new Router();
  *         storeName:
  *           type: string
  *           description: 商店名稱
+ *         description:
+ *           type: string
+ *           description: 商店描述
  *         contact:
  *           type: object
  *           properties:

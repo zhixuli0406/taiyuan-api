@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const storeSettingSchema = new mongoose.Schema({
   name: { type: String, required: true, default: "My Store" }, // 商店名稱
+  description: { type: String, default: "" },                  // 商店描述
   contact: {
     phone: { type: String, default: "" },                      // 聯繫電話
     email: { type: String, default: "" },                      // 聯繫郵箱
