@@ -36,7 +36,7 @@ const app = new Koa();
 
 // 使用 CORS 中間件
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173' || 'http://localhost:3000',
   credentials: true
 }));
 
