@@ -34,9 +34,28 @@ connectDB().then(()=>{
 
 const app = new Koa();
 
-// 使用 CORS 中間件
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+// 如果生產環境有不同的來源，也從環境變數讀取
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN);
+}
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173' || 'http://localhost:3000',
+  origin: function (ctx) {
+    const requestOrigin = ctx.accept.headers.origin;
+    if (!requestOrigin) { // For requests with no Origin header (like simple requests or server-to-server)
+        return ''; // Or handle as needed, maybe disallow? Depends on your security needs.
+    }
+    if (allowedOrigins.includes(requestOrigin)) {
+      return requestOrigin; // Reflect the matched origin
+    }
+    // Optionally return a default allowed origin or an empty string/null to block
+    return false; // Block requests from origins not in the list
+  },
   credentials: true
 }));
 
