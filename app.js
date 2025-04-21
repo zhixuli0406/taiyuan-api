@@ -37,7 +37,8 @@ const app = new Koa();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  'https://taiyuan.dudustudio.monster'
+  'https://taiyuan.dudustudio.monster',
+  'https://admin-taiyuan.dudustudio.monster'
 ];
 
 // 如果生產環境有不同的來源，也從環境變數讀取
