@@ -16,23 +16,31 @@ const ensureAdminAuth = async (ctx, next) => {
   // 檢查 token 等認證邏輯
   const token = ctx.headers.authorization?.split(' ')[1];
   if (!token) {
-    ctx.status = 401;
+    ctx.status = 403;
     ctx.body = { error: "No token provided" };
     return;
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded._id) {
-      ctx.status = 401;
+    if (!decoded || !decoded._id || !decoded.role) {
+      ctx.status = 403;
       ctx.body = { error: "Invalid token" };
       return;
     }
+
+    // 檢查角色是否有效
+    if (!["SuperAdmin", "Admin"].includes(decoded.role)) {
+      ctx.status = 403;
+      ctx.body = { error: "Invalid role" };
+      return;
+    }
+
     ctx.state.admin = decoded; // 儲存到 ctx.state
     await next();
   } catch (error) {
     console.error("Token verification error:", error);
-    ctx.status = 401;
+    ctx.status = 403;
     ctx.body = { error: "Invalid token" };
   }
 };
